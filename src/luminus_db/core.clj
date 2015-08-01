@@ -6,14 +6,7 @@
 
 (defonce ^:dynamic conn (atom nil))
 
-(def pool-spec
-  {:adapter    :postgresql
-   :init-size  1
-   :min-idle   1
-   :max-idle   4
-   :max-active 32})
-
-(defn connect! [url]
+(defn connect! [url pool-spec]
   (try
     (reset!
       conn
