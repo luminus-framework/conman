@@ -1,6 +1,5 @@
 (ns luminus-db.core
-  (:require [yesql.core :as yesql]
-            [clj-dbcp.core :as dbcp]
+  (:require [clj-dbcp.core :as dbcp]
             [clojure.java.jdbc :as jdbc]))
 
 (defmacro bind-connection
