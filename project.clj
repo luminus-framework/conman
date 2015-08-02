@@ -1,4 +1,4 @@
-(defproject luminus-db "0.1.0"
+(defproject luminus-db "0.1.1"
   :description "Luminus database connection management library"
   :url "https://github.com/luminus-framework/luminus-db"
   :license {:name "Eclipse Public License"
