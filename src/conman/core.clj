@@ -1,9 +1,8 @@
 (ns conman.core
-  (:require [yesql.core :as yesql]
-            [clj-dbcp.core :as dbcp]
-            [clojure.java.jdbc :as jdbc]))
+  (:require [clj-dbcp.core :as dbcp]))
 
 (defmacro bind-connection
+  "binds yesql queries to the connection atom specified by conn"
   [conn & filenames]
   `(let [base-namespace# *ns*
          queries-ns# (-> *ns* ns-name name (str ".connectionless-queries") symbol)]
