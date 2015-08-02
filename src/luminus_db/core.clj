@@ -6,7 +6,7 @@
 (defn- queries-ns-name []
   (str (name (ns-name *ns*)) ".connectionless-queries"))
 
-(defn init! [& filename]
+(defn init! [& filenames]
   (let [conn* (atom nil)
         base-namespace *ns*
         queries-ns (symbol (queries-ns-name))]
