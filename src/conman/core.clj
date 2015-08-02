@@ -1,5 +1,6 @@
 (ns conman.core
-  (:require [clj-dbcp.core :as dbcp]))
+  (:require [clj-dbcp.core :as dbcp]
+            yesql.core))
 
 (defmacro bind-connection
   "binds yesql queries to the connection atom specified by conn"
