@@ -32,8 +32,8 @@
 (defn disconnect! [conn]
   (when-let [ds (:datasource @conn)]
     (when-not (.isClosed ds)
-      (.close ds)
-      (reset! conn nil))))
+      (.close ds)))
+  (reset! conn nil))
 
 (defmacro with-transaction
   "runs the body in a transaction where t-conn is the name of the transaction connection
