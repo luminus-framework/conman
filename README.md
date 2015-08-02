@@ -14,7 +14,8 @@ connection aware functions.
 SQL statements should be populated in files that are accessible on the resource path.
 
 The file format is: `(<name tag> [docstring comments]
-<the query>)*`. For example, we could create a file `resources/sql/queries.sql` with
+<the query>)*`, see the official [Yesql docs](https://github.com/krisajenkins/yesql/tree/devel) for further
+exmaples. For example, we could create a file `resources/sql/queries.sql` with
 the following content:
 
 ``` sql
