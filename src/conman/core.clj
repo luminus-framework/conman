@@ -1,4 +1,4 @@
-(ns luminus-db.core
+(ns conman.core
   (:require [yesql.core :as yesql]
             [clj-dbcp.core :as dbcp]
             [clojure.java.jdbc :as jdbc]))

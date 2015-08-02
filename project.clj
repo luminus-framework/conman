@@ -1,5 +1,5 @@
-(defproject luminus-db "0.1.1"
-  :description "Luminus database connection management library"
+(defproject conman "0.1.1"
+  :description "a database connection management library"
   :url "https://github.com/luminus-framework/luminus-db"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
