@@ -6,4 +6,5 @@
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [clj-dbcp "0.8.1"]
                  [yesql "0.5.0-rc3"]
+                 [instaparse "1.4.1"]
                  [org.clojure/java.jdbc "0.4.1"]])
