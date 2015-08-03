@@ -1,6 +1,7 @@
 (ns conman.core
   (:require [clj-dbcp.core :as dbcp]
-            yesql.core))
+            yesql.core
+            clojure.java.jdbc))
 
 (defmacro bind-connection
   "binds yesql queries to the connection atom specified by conn"
@@ -40,6 +41,6 @@
    the body will be evaluated within a binding where conn is set to the transactional
    connection"
   [args & body]
-  `(jdbc/with-db-transaction [~(first args) (deref ~(second args))]
+  `(clojure.java.jdbc/with-db-transaction [~(first args) (deref ~(second args))]
      (binding [~(second args) (atom ~(first args))]
        ~@body)))
