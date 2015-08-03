@@ -12,9 +12,6 @@
 
 (bind-connection conn "queries.sql")
 
-;(yesql.core/defqueries "queries.sql")
-
-
 (defn create-test-table []
   (sql/db-do-commands
    @conn
