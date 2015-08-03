@@ -22,19 +22,33 @@
                      ([args# conn#] (yesql-query# args# {:connection conn#})))))))
      (in-ns (ns-name base-namespace#))))
 
-(defn connect! [conn pool-spec]
-  (try
-    (reset!
-     conn
-     {:datasource (dbcp/make-datasource pool-spec)})
-    (catch Throwable t
-      (throw (Exception. "Error occured while connecting to the database!" t)))))
+(defn connect!
+  "attempts to create a new connection and set it as the value of the conn atom,
+   does nothing if conn atom is already populated"
+  [conn pool-spec]
+  (when-not @conn
+    (try
+      (reset!
+       conn
+       {:datasource (dbcp/make-datasource pool-spec)})
+      (catch Throwable t
+        (throw (Exception. "Error occured while connecting to the database!" t))))))
 
-(defn disconnect! [conn]
+(defn disconnect!
+  "checks if there's a connection and closes it
+   resets the conn to nil"
+  [conn]
   (when-let [ds (:datasource @conn)]
     (when-not (.isClosed ds)
       (.close ds)))
   (reset! conn nil))
+
+(defn reconnect!
+  "calls disconnect! to ensure the connection is closed
+   then calls connect! to establish a new connection"
+  [conn pool-spec]
+  (disconnect! conn)
+  (connect! conn pool-spec))
 
 (defmacro with-transaction
   "runs the body in a transaction where t-conn is the name of the transaction connection
