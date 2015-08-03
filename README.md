@@ -9,6 +9,10 @@ connection aware functions.
 
 ## Usage
 
+Conman relies on a dynamic variable to manage the connection. The dynamic variable allows the connection to be
+rebound contextually for transactions. When working with multiple databases, a separate namespace is required
+for each database connection.
+
 ### Defining Queiries
 
 SQL statements should be populated in files that are accessible on the resource path.
