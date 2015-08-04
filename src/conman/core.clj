@@ -1,5 +1,6 @@
 (ns conman.core
   (:require [clj-dbcp.core :as dbcp]
+            [to-jdbc-uri.core :refer [to-jdbc-uri]]
             yesql.core
             clojure.java.jdbc))
 
@@ -30,7 +31,10 @@
     (try
       (reset!
        conn
-       {:datasource (dbcp/make-datasource pool-spec)})
+       {:datasource
+        (-> pool-spec
+            (update-in [:jdbc-url] to-jdbc-uri)
+            dbcp/make-datasource)})
       (catch Throwable t
         (throw (Exception. "Error occured while connecting to the database!" t))))))
 
