@@ -12,7 +12,7 @@ connection aware functions.
 [![Clojars Project](http://clojars.org/conman/latest-version.svg)](http://clojars.org/conman)
 
 Conman relies on a dynamic variable to manage the connection. The dynamic variable allows the connection to be
-rebound contextually for transactions. When working with multiple databases, a separatec atom is required
+rebound contextually for transactions. When working with multiple databases, a separate atom is required
 to track each database connection.
 
 ### Defining Queiries
