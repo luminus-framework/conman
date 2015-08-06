@@ -32,9 +32,10 @@
       (reset!
        conn
        {:datasource
-        (-> pool-spec
-            (update-in [:jdbc-url] #(when % (to-jdbc-uri %)))
-            dbcp/make-datasource)})
+        (dbcp/make-datasource
+          (if (:jdbc-url pool-spec)
+            (update-in pool-spec [:jdbc-url] to-jdbc-uri)
+            pool-spec))})
       (catch Throwable t
         (throw (Exception. "Error occured while connecting to the database!" t))))))
 
