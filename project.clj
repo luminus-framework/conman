@@ -1,4 +1,4 @@
-(defproject conman "0.1.6"
+(defproject conman "0.1.7"
   :description "a database connection management library"
   :url "https://github.com/luminus-framework/conman"
   :license {:name "Eclipse Public License"
@@ -7,7 +7,7 @@
                  [clj-dbcp "0.8.1"]
                  [yesql "0.5.0-rc3"]
                  [instaparse "1.4.1"]
-                 [to-jdbc-uri "0.2.0"]
+                 [to-jdbc-uri "0.3.0"]
                  [org.clojure/java.jdbc "0.4.1"]]
   :profiles
   {:dev
