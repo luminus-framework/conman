@@ -12,16 +12,18 @@
      (create-ns queries-ns#)
      (in-ns queries-ns#)
      (require 'yesql.core)
-     (doseq [filename# ~(vec filenames)]
-       (let [yesql-queries# (yesql.core/defqueries filename#)]
-         (doseq [yesql-query# yesql-queries#]
-           (intern base-namespace#
-                   (with-meta (:name (meta yesql-query#)) (meta yesql-queries#))
-                   (fn
-                     ([] (yesql-query# {} {:connection (deref ~conn)}))
-                     ([args#] (yesql-query# args# {:connection (deref ~conn)}))
-                     ([args# conn#] (yesql-query# args# {:connection conn#})))))))
-     (in-ns (ns-name base-namespace#))))
+     (let [yesql-connected-queries# (doall (flatten
+                                            (for [filename# ~(vec filenames)]
+                                              (let [yesql-queries# (yesql.core/defqueries filename#)]
+                                                (for [yesql-query# yesql-queries#]
+                                                  (intern base-namespace#
+                                                          (with-meta (:name (meta yesql-query#)) (meta yesql-queries#))
+                                                          (fn
+                                                            ([] (yesql-query# {} {:connection (deref ~conn)}))
+                                                            ([args#] (yesql-query# args# {:connection (deref ~conn)}))
+                                                            ([args# conn#] (yesql-query# args# {:connection conn#})))))))))]
+       (in-ns (ns-name base-namespace#))
+       yesql-connected-queries#)))
 
 (defn connect!
   "attempts to create a new connection and set it as the value of the conn atom,
