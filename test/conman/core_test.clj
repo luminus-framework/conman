@@ -15,7 +15,7 @@
 (defn create-test-table []
   (sql/db-do-commands
    @conn
-   (sql/drop-table-ddl :fruits)
+   "DROP TABLE fruits IF EXISTS;"
    (sql/create-table-ddl
     :fruits
     [:id :int "DEFAULT 0"]
