@@ -8,20 +8,22 @@
   "binds yesql queries to the connection atom specified by conn"
   [conn & filenames]
   `(let [base-namespace# *ns*
-         queries-ns# (-> *ns* ns-name name (str ".connectionless-queries") symbol)]
+         queries-ns#     (-> *ns* ns-name name (str ".connectionless-queries") symbol)]
      (create-ns queries-ns#)
      (in-ns queries-ns#)
      (require 'yesql.core)
-     (let [yesql-connected-queries# (doall (flatten
-                                            (for [filename# ~(vec filenames)]
-                                              (let [yesql-queries# (yesql.core/defqueries filename#)]
-                                                (for [yesql-query# yesql-queries#]
-                                                  (intern base-namespace#
-                                                          (with-meta (:name (meta yesql-query#)) (meta yesql-queries#))
-                                                          (fn
-                                                            ([] (yesql-query# {} {:connection (deref ~conn)}))
-                                                            ([args#] (yesql-query# args# {:connection (deref ~conn)}))
-                                                            ([args# conn#] (yesql-query# args# {:connection conn#})))))))))]
+     (let [yesql-connected-queries#
+           (doall
+             (flatten
+               (for [filename# ~(vec filenames)]
+                 (let [yesql-queries# (yesql.core/defqueries filename#)]
+                   (for [yesql-query# yesql-queries#]
+                     (intern base-namespace#
+                             (with-meta (:name (meta yesql-query#)) (meta yesql-queries#))
+                             (fn
+                               ([] (yesql-query# {} {:connection (deref ~conn)}))
+                               ([args#] (yesql-query# args# {:connection (deref ~conn)}))
+                               ([args# conn#] (yesql-query# args# {:connection conn#})))))))))]
        (in-ns (ns-name base-namespace#))
        yesql-connected-queries#)))
 
@@ -32,12 +34,12 @@
   (when-not @conn
     (try
       (reset!
-       conn
-       {:datasource
-        (dbcp/make-datasource
-          (if (:jdbc-url pool-spec)
-            (update-in pool-spec [:jdbc-url] to-jdbc-uri)
-            pool-spec))})
+        conn
+        {:datasource
+         (dbcp/make-datasource
+           (if (:jdbc-url pool-spec)
+             (update-in pool-spec [:jdbc-url] to-jdbc-uri)
+             pool-spec))})
       (catch Throwable t
         (throw (Exception. "Error occured while connecting to the database!" t))))))
 
@@ -63,5 +65,5 @@
    connection"
   [args & body]
   `(clojure.java.jdbc/with-db-transaction [~(first args) (deref ~(second args))]
-     (binding [~(second args) (atom ~(first args))]
-       ~@body)))
+                                          (binding [~(second args) (atom ~(first args))]
+                                            ~@body)))
