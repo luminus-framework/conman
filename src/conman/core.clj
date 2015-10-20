@@ -19,7 +19,7 @@
                  (let [yesql-queries# (yesql.core/defqueries filename#)]
                    (for [yesql-query# yesql-queries#]
                      (intern base-namespace#
-                             (with-meta (:name (meta yesql-query#)) (meta yesql-queries#))
+                             (:name (meta yesql-query#))
                              (fn
                                ([] (yesql-query# {} {:connection (deref ~conn)}))
                                ([args#] (yesql-query# args# {:connection (deref ~conn)}))
