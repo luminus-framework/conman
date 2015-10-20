@@ -1,8 +1,8 @@
 (ns conman.core
-  (:require [clj-dbcp.core :as dbcp]
-            [to-jdbc-uri.core :refer [to-jdbc-uri]]
+  (:require [to-jdbc-uri.core :refer [to-jdbc-uri]]
             yesql.core
-            clojure.java.jdbc))
+            clojure.java.jdbc)
+  (:import [com.zaxxer.hikari HikariConfig HikariDataSource]))
 
 (defmacro bind-connection
   "binds yesql queries to the connection atom specified by conn"
@@ -27,6 +27,23 @@
        (in-ns (ns-name base-namespace#))
        yesql-connected-queries#)))
 
+(defn- make-config
+  [{:keys [jdbc-url username password auto-commit? conn-timeout idle-timeout
+           max-lifetime min-idle max-pool-size pool-name]}]
+  (let [cfg (HikariConfig.)
+        uri (when jdbc-url (to-jdbc-uri jdbc-url))]
+    (when uri                  (.setJdbcUrl cfg uri))
+    (when username             (.setUsername cfg username))
+    (when password             (.setPassword cfg password))
+    (when (some? auto-commit?) (.setAutoCommit cfg auto-commit?))
+    (when conn-timeout         (.setConnectionTimeout cfg conn-timeout))
+    (when idle-timeout         (.setIdleTimeout cfg conn-timeout))
+    (when max-lifetime         (.setMaxLifetime cfg max-lifetime))
+    (when max-pool-size        (.setMaximumPoolSize cfg max-pool-size))
+    (when min-idle             (.setMinimumIdle cfg min-idle))
+    (when pool-name            (.setPoolName cfg pool-name))
+    cfg))
+
 (defn connect!
   "attempts to create a new connection and set it as the value of the conn atom,
    does nothing if conn atom is already populated"
@@ -35,11 +52,7 @@
     (try
       (reset!
         conn
-        {:datasource
-         (dbcp/make-datasource
-           (if (:jdbc-url pool-spec)
-             (update-in pool-spec [:jdbc-url] to-jdbc-uri)
-             pool-spec))})
+        {:datasource (HikariDataSource. (make-config pool-spec))})
       (catch Throwable t
         (throw (Exception. "Error occured while connecting to the database!" t))))))
 
