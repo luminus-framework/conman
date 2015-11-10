@@ -110,6 +110,20 @@ connection in that case:
   (get-user {:id "foo"}))
 ```
 
+The isolation level and readonly status of the transaction may be specified using the `:isolation`
+and `:read-only?` keys respectively:
+
+```clojure
+(with-transaction
+    [t-conn conn :isolation :serializable]
+    (= java.sql.Connection/TRANSACTION_SERIALIZABLE
+       (.getTransactionIsolation (sql/db-connection t-conn))))
+(with-transaction
+  [t-conn conn :isolation :read-uncommitted]
+  (= java.sql.Connection/TRANSACTION_READ_UNCOMMITTED
+     (.getTransactionIsolation (sql/db-connection t-conn))))
+```
+
 ## License
 
 Copyright © 2015 Dmitri Sotnikov and Carousel Apps Ltd.
