@@ -73,10 +73,13 @@
   (connect! conn pool-spec))
 
 (defmacro with-transaction
-  "runs the body in a transaction where t-conn is the name of the transaction connection
-   the body will be evaluated within a binding where conn is set to the transactional
-   connection"
+  "Runs the body in a transaction where t-conn is the name of the transaction connection.
+   The body will be evaluated within a binding where conn is set to the transactional
+   connection. The isolation level and readonly status of the transaction may also be specified.
+   (with-db-transaction [t-conn conn :isolation level :read-only? true]
+     ... t-conn ...)
+   See clojure.java.jdbc/db-transaction* for more details."
   [args & body]
-  `(clojure.java.jdbc/with-db-transaction [~(first args) (deref ~(second args))]
+  `(clojure.java.jdbc/with-db-transaction [~(first args) (deref ~(second args)) ~@(rest (rest args))]
                                           (binding [~(second args) (atom ~(first args))]
                                             ~@body)))
