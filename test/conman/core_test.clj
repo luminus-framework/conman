@@ -49,3 +49,12 @@
      (= []
         (get-fruit {:name "apple"}))))
 
+(deftest transaction-options
+  (with-transaction
+    [t-conn conn :isolation :serializable]
+    (is (= java.sql.Connection/TRANSACTION_SERIALIZABLE
+           (.getTransactionIsolation (sql/db-connection t-conn)))))
+  (with-transaction
+    [t-conn conn :isolation :read-uncommitted]
+    (is (= java.sql.Connection/TRANSACTION_READ_UNCOMMITTED
+           (.getTransactionIsolation (sql/db-connection t-conn))))))
