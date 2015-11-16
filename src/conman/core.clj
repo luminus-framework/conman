@@ -23,7 +23,9 @@
                              (fn
                                ([] (yesql-query# {} {:connection (deref ~conn)}))
                                ([args#] (yesql-query# args# {:connection (deref ~conn)}))
-                               ([args# conn#] (yesql-query# args# {:connection conn#})))))))))]
+                               ([args# conn#] (yesql-query# args# {:connection conn#}))
+                               ([args# conn# options#]
+                                (yesql-query# args# (merge {:connection conn#} options#))))))))))]
        (in-ns (ns-name base-namespace#))
        yesql-connected-queries#)))
 
