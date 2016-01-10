@@ -2,7 +2,7 @@
 
 Luminus database connection management and SQL query generation library
 
-The library provides pooled connections using the [clj-dbcp](https://github.com/kumarshantanu/clj-dbcp) library.
+The library provides pooled connections using the [HikariCP](https://github.com/brettwooldridge/HikariCP) library.
 
 The queries are generated using [Yesql](https://github.com/krisajenkins/yesql/tree/devel) and wrapped with
 connection aware functions.
