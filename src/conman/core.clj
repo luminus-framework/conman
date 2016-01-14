@@ -30,11 +30,14 @@
        yesql-connected-queries#)))
 
 (defn- make-config
-  [{:keys [jdbc-url username password auto-commit? conn-timeout idle-timeout
+  [{:keys [jdbc-url datasource datasource-classname username
+           password auto-commit? conn-timeout idle-timeout
            max-lifetime min-idle max-pool-size pool-name]}]
   (let [cfg (HikariConfig.)
         uri (when jdbc-url (to-jdbc-uri jdbc-url))]
     (when uri                  (.setJdbcUrl cfg uri))
+    (when datasource           (.setDataSourceClassName cfg datasource))
+    (when datasource-classname (.setDataSourceClassName cfg datasource-classname))
     (when username             (.setUsername cfg username))
     (when password             (.setPassword cfg password))
     (when (some? auto-commit?) (.setAutoCommit cfg auto-commit?))
