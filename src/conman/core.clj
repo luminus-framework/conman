@@ -36,7 +36,7 @@
   (let [cfg (HikariConfig.)
         uri (when jdbc-url (to-jdbc-uri jdbc-url))]
     (when uri                  (.setJdbcUrl cfg uri))
-    (when datasource           (.setDataSourceClassName cfg datasource))
+    (when datasource           (.setDataSource cfg datasource))
     (when datasource-classname (.setDataSourceClassName cfg datasource-classname))
     (when username             (.setUsername cfg username))
     (when password             (.setPassword cfg password))
