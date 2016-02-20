@@ -1,33 +1,36 @@
 (ns conman.core
   (:require [to-jdbc-uri.core :refer [to-jdbc-uri]]
-            yesql.core
+            [hugsql.core :as hugsql]
+    ;yesql.core
             clojure.java.jdbc)
   (:import [com.zaxxer.hikari HikariConfig HikariDataSource]))
 
-(defmacro bind-connection
-  "binds yesql queries to the connection atom specified by conn"
-  [conn & filenames]
-  `(let [base-namespace# *ns*
-         queries-ns#     (-> *ns* ns-name name (str ".connectionless-queries") symbol)]
-     (create-ns queries-ns#)
-     (in-ns queries-ns#)
-     (require 'yesql.core)
-     (let [yesql-connected-queries#
-           (doall
-             (flatten
-               (for [filename# ~(vec filenames)]
-                 (let [yesql-queries# (yesql.core/defqueries filename#)]
-                   (for [yesql-query# yesql-queries#]
-                     (intern base-namespace#
-                             (:name (meta yesql-query#))
-                             (fn
-                               ([] (yesql-query# {} {:connection (deref ~conn)}))
-                               ([args#] (yesql-query# args# {:connection (deref ~conn)}))
-                               ([args# conn#] (yesql-query# args# {:connection conn#}))
-                               ([args# conn# options#]
-                                (yesql-query# args# (merge {:connection conn#} options#))))))))))]
-       (in-ns (ns-name base-namespace#))
-       yesql-connected-queries#)))
+(defn- load-queries [filenames]
+  (reduce
+    (fn [queries file]
+      (let [{snips true
+             fns   false}
+            (group-by
+              #(-> % second :snip? boolean)
+              (hugsql/map-of-db-fns file))]
+        (-> queries
+            (update :snips into snips)
+            (update :fns into fns))))
+    {}
+    filenames))
+
+(defmacro bind-connection [conn & filenames]
+  `(let [{snips# :snips fns#   :fns} (load-queries '~filenames)]
+     (doseq [[id# {fn# :fn}] snips#]
+       (intern *ns* (symbol (name id#)) fn#))
+     (doseq [[id# {fn# :fn}] fns#]
+       (intern *ns* (symbol (name id#))
+               (fn
+                 ([] (fn# (deref ~conn) {}))
+                 ([params#] (fn# (deref ~conn) params#))
+                 ([conn# params#] (fn# conn# params#))
+                 ([conn# params# opts# & command-opts#]
+                  (apply fn# conn# params# opts# command-opts#)))))))
 
 (defn- make-config
   [{:keys [jdbc-url datasource datasource-classname username

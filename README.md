@@ -4,7 +4,7 @@ Luminus database connection management and SQL query generation library
 
 The library provides pooled connections using the [HikariCP](https://github.com/brettwooldridge/HikariCP) library.
 
-The queries are generated using [Yesql](https://github.com/krisajenkins/yesql/tree/devel) and wrapped with
+The queries are generated using [HugSQL](https://github.com/layerware/hugsql) and wrapped with
 connection aware functions.
 
 ## Usage
@@ -19,56 +19,59 @@ to track each database connection.
 
 SQL statements should be populated in files that are accessible on the resource path.
 
-The file format is: `(<name tag> [docstring comments]
-<the query>)*`, see the official [Yesql docs](https://github.com/krisajenkins/yesql/tree/devel) for further
+The file format is: `(:<name tag> [docstring comments]
+<the query>)*`, see the official [HugSQL docs](http://www.hugsql.org/) for further
 examples. For example, we could create a file `resources/sql/queries.sql` with
 the following content:
 
 ``` sql
--- name: create-user!
+-- :name create-user! :! :n
 -- creates a new user record
 INSERT INTO users
 (id, first_name, last_name, email, pass)
 VALUES (:id, :first_name, :last_name, :email, :pass)
 
--- name: get-user
+-- :name get-user :? :1
 -- retrieve a user given the id.
 SELECT * FROM users
 WHERE id = :id
 
--- name: get-all-users
+-- :name get-all-users :? :*
 -- retrieve all users.
 SELECT * FROM users
 ```
 
-The queries are bound to the connection using the `bind-connection` macro. The function
+The queries are bound to the connection using the `bind-connection` macro. This macro
 accepts the connection atom followed by one or more strings representing SQL query files.
 
 ```clojure
 (use 'conman.core)
 
-(defonce ^:dynamic conn (atom nil))
+(defonce ^:dynamic *db* (atom nil))
 
-(conman/bind-connection conn "sql/queries.sql")
+(conman/bind-connection *db* "sql/queries.sql")
 ```
 
-The `bind-connection` macro is expanded, generating `create-user!` and `get-user` functions
-in the current namespace.
-
-These functions can be called in three ways:
+The `bind-connection` generates `create-user!` and `get-user` functions
+in the current namespace. These functions can be called in four different ways:
 
 ```clojure
-;; when called with no argument then the Yesql generated function
-;; will be called with an empty paramter map and the connection specified in `conn`
+;; when called with no argument then the HugSQL generated function
+;; will be called with an empty parameter map and the connection specified in the *db* atom
 (get-all-users)
 
-;; when a parameter map is passed as an argument the map and the connection specified in `conn`
-;; will be passed to the Yesql generated function
+;; when a parameter map is passed as the argument, then the map and the connection specified
+;; in the *db* atom will be passed to the HugSQL generated function
 (create-user! {:id "foo" :first_name "Bob" :last_name "Bobberton" :email nil :pass nil})
 
-;; finally, a parameter map and an explicit connection can be
-;; passed to the function, in this case the specified connection is used
-(get-user {:id "foo"} some-other-conn)
+;; an explicit connection and a parameter map can be
+;; passed to the function
+(get-user some-other-conn {:id "foo"})
+
+;; finally, an explicit connection and a parameter map, options, and optional command options
+;; can be passed to the function
+(get-user some-other-conn conn {:id "foo"} opts)
+(get-user some-other-conn conn {:id "foo"} opts cmd-opt1 cmd-opt2)
 
 ```
 
