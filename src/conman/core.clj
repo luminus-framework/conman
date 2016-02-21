@@ -5,7 +5,7 @@
             clojure.java.jdbc)
   (:import [com.zaxxer.hikari HikariConfig HikariDataSource]))
 
-(defn- load-queries [filenames]
+(defn load-queries [filenames]
   (reduce
     (fn [queries file]
       (let [{snips true
@@ -20,7 +20,7 @@
     filenames))
 
 (defmacro bind-connection [conn & filenames]
-  `(let [{snips# :snips fns#   :fns} (load-queries '~filenames)]
+  `(let [{snips# :snips fns# :fns :as queries#} (conman.core/load-queries '~filenames)]
      (doseq [[id# {fn# :fn}] snips#]
        (intern *ns* (symbol (name id#)) fn#))
      (doseq [[id# {fn# :fn}] fns#]
@@ -30,7 +30,8 @@
                  ([params#] (fn# (deref ~conn) params#))
                  ([conn# params#] (fn# conn# params#))
                  ([conn# params# opts# & command-opts#]
-                  (apply fn# conn# params# opts# command-opts#)))))))
+                  (apply fn# conn# params# opts# command-opts#)))))
+     queries#))
 
 (defn- make-config
   [{:keys [jdbc-url datasource datasource-classname username
