@@ -55,20 +55,12 @@ The lifecycle of the connection is expected to be managed using a library such a
    :init-size  1
    :min-idle   1
    :max-idle   4
-   :max-active 32})
+   :max-active 32
+   :jdbc-url "jdbc:postgresql://localhost/myapp?user=user&password=pass"})
 
-(defn connect! []
-  (conman/connect!
-    (assoc
-      pool-spec
-      :jdbc-url "jdbc:postgresql://localhost/myapp?user=user&password=pass")))
-
-(defn disconnect! [conn]
-  (conman.core/disconnect! conn))
-
-(mount.core/defstate ^:dynamic *db*
-                     :start (connect!)
-                     :stop (disconnect! *db*))
+(defstate ^:dynamic *db*
+          :start (conman/connect! pool-spec)
+          :stop (conman/disconnect! *db*))
 
 (conman/bind-connection *db* "sql/queries.sql")
 ```
