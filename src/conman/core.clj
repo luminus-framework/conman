@@ -82,6 +82,6 @@
      ... t-conn ...)
    See clojure.java.jdbc/db-transaction* for more details."
   [args & body]
-  `(clojure.java.jdbc/with-db-transaction [~(first args) ~(second args) ~@(rest (rest args))]
-                                          (binding [~(second args) ~(first args)]
+  `(clojure.java.jdbc/with-db-transaction [t-conn# ~(first args) ~@(rest args)]
+                                          (binding [~(first args) t-conn#]
                                             ~@body)))
