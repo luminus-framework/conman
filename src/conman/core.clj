@@ -26,8 +26,8 @@
      (doseq [[id# {fn# :fn}] fns#]
        (intern *ns* (symbol (name id#))
                (fn
-                 ([] (fn# (deref ~conn) {}))
-                 ([params#] (fn# (deref ~conn) params#))
+                 ([] (fn# ~conn {}))
+                 ([params#] (fn# ~conn params#))
                  ([conn# params#] (fn# conn# params#))
                  ([conn# params# opts# & command-opts#]
                   (apply fn# conn# params# opts# command-opts#)))))
@@ -56,30 +56,23 @@
 (defn connect!
   "attempts to create a new connection and set it as the value of the conn atom,
    does nothing if conn atom is already populated"
-  [conn pool-spec]
-  (when-not @conn
-    (try
-      (reset!
-        conn
-        {:datasource (HikariDataSource. (make-config pool-spec))})
-      (catch Throwable t
-        (throw (Exception. "Error occured while connecting to the database!" t))))))
+  [pool-spec]
+  {:datasource (HikariDataSource. (make-config pool-spec))})
 
 (defn disconnect!
   "checks if there's a connection and closes it
    resets the conn to nil"
   [conn]
-  (when-let [ds (:datasource @conn)]
+  (when-let [ds (:datasource conn)]
     (when-not (.isClosed ds)
-      (.close ds)))
-  (reset! conn nil))
+      (.close ds))))
 
 (defn reconnect!
   "calls disconnect! to ensure the connection is closed
    then calls connect! to establish a new connection"
   [conn pool-spec]
   (disconnect! conn)
-  (connect! conn pool-spec))
+  (connect! pool-spec))
 
 (defmacro with-transaction
   "Runs the body in a transaction where t-conn is the name of the transaction connection.
@@ -89,6 +82,6 @@
      ... t-conn ...)
    See clojure.java.jdbc/db-transaction* for more details."
   [args & body]
-  `(clojure.java.jdbc/with-db-transaction [~(first args) (deref ~(second args)) ~@(rest (rest args))]
-                                          (binding [~(second args) (atom ~(first args))]
+  `(clojure.java.jdbc/with-db-transaction [~(first args) ~(second args) ~@(rest (rest args))]
+                                          (binding [~(second args) ~(first args)]
                                             ~@body)))

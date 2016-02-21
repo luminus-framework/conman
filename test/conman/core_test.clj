@@ -4,17 +4,17 @@
             [clojure.java.jdbc :as sql]))
 
 (defonce ^:dynamic conn
-  (atom {:classname   "org.h2.Driver"
-         :connection-uri "jdbc:h2:./test.db"
-         :make-pool?     true
-         :naming         {:keys   clojure.string/lower-case
-                          :fields clojure.string/upper-case}}))
+         {:classname   "org.h2.Driver"
+          :connection-uri "jdbc:h2:./test.db"
+          :make-pool?     true
+          :naming         {:keys   clojure.string/lower-case
+                           :fields clojure.string/upper-case}})
 
 (bind-connection conn "queries.sql")
 
 (defn create-test-table []
   (sql/db-do-commands
-   @conn
+   conn
    "DROP TABLE fruits IF EXISTS;"
    (sql/create-table-ddl
     :fruits
