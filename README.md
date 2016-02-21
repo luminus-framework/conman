@@ -18,10 +18,7 @@ to track each database connection.
 ### Defining Queries
 
 SQL statements should be populated in files that are accessible on the resource path.
-
-The file format is: `(:<name tag> [docstring comments]
-<the query>)*`, see the official [HugSQL docs](http://www.hugsql.org/) for further
-examples. For example, we could create a file `resources/sql/queries.sql` with
+For example, we could create a file `resources/sql/queries.sql` with
 the following content:
 
 ``` sql
@@ -40,6 +37,7 @@ WHERE id = :id
 -- retrieve all users.
 SELECT * FROM users
 ```
+See the official [HugSQL docs](http://www.hugsql.org/) for further examples.
 
 The queries are bound to the connection using the `bind-connection` macro. This macro
 accepts the connection var followed by one or more strings representing SQL query files.
