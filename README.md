@@ -18,10 +18,7 @@ to track each database connection.
 ### Defining Queries
 
 SQL statements should be populated in files that are accessible on the resource path.
-
-The file format is: `(:<name tag> [docstring comments]
-<the query>)*`, see the official [HugSQL docs](http://www.hugsql.org/) for further
-examples. For example, we could create a file `resources/sql/queries.sql` with
+For example, we could create a file `resources/sql/queries.sql` with
 the following content:
 
 ``` sql
@@ -40,6 +37,7 @@ WHERE id = :id
 -- retrieve all users.
 SELECT * FROM users
 ```
+See the official [HugSQL docs](http://www.hugsql.org/) for further examples.
 
 The queries are bound to the connection using the `bind-connection` macro. This macro
 accepts the connection var followed by one or more strings representing SQL query files.
@@ -57,20 +55,12 @@ The lifecycle of the connection is expected to be managed using a library such a
    :init-size  1
    :min-idle   1
    :max-idle   4
-   :max-active 32})
+   :max-active 32
+   :jdbc-url "jdbc:postgresql://localhost/myapp?user=user&password=pass"})
 
-(defn connect! []
-  (conman/connect!
-    (assoc
-      pool-spec
-      :jdbc-url "jdbc:postgresql://localhost/myapp?user=user&password=pass")))
-
-(defn disconnect! [conn]
-  (conman.core/disconnect! conn))
-
-(mount.core/defstate ^:dynamic *db*
-                     :start (connect!)
-                     :stop (disconnect! *db*))
+(defstate ^:dynamic *db*
+          :start (conman/connect! pool-spec)
+          :stop (conman/disconnect! *db*))
 
 (conman/bind-connection *db* "sql/queries.sql")
 ```
