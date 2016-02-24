@@ -2,13 +2,11 @@
   (:require [to-jdbc-uri.core :refer [to-jdbc-uri]]
             [hugsql.core :as hugsql]
             [clojure.java.io :as io]
-            [clojure.tools.logging :as log]
             clojure.java.jdbc)
   (:import [com.zaxxer.hikari HikariConfig HikariDataSource]))
 
 (defn validate-files [filenames]
   (doseq [file filenames]
-    (log/info "loading SQL queries from: " file)
     (when-not (io/resource file)
       (throw (Exception. (str "conman to find the query file:" file))))))
 
