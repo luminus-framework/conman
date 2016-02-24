@@ -1,11 +1,19 @@
 (ns conman.core
   (:require [to-jdbc-uri.core :refer [to-jdbc-uri]]
             [hugsql.core :as hugsql]
-    ;yesql.core
+            [clojure.java.io :as io]
+            [clojure.tools.logging :as log]
             clojure.java.jdbc)
   (:import [com.zaxxer.hikari HikariConfig HikariDataSource]))
 
+(defn validate-files [filenames]
+  (doseq [file filenames]
+    (log/info "loading SQL queries from: " file)
+    (when-not (io/resource file)
+      (throw (Exception. (str "conman to find the query file:" file))))))
+
 (defn load-queries [filenames]
+  (validate-files filenames)
   (reduce
     (fn [queries file]
       (let [{snips true
@@ -20,18 +28,18 @@
     filenames))
 
 (defmacro bind-connection [conn & filenames]
-  `(let [{snips# :snips fns# :fns :as queries#} (conman.core/load-queries '~filenames)]
-     (doseq [[id# {fn# :fn}] snips#]
-       (intern *ns* (symbol (name id#)) fn#))
-     (doseq [[id# {fn# :fn}] fns#]
-       (intern *ns* (symbol (name id#))
-               (fn
-                 ([] (fn# ~conn {}))
-                 ([params#] (fn# ~conn params#))
-                 ([conn# params#] (fn# conn# params#))
-                 ([conn# params# opts# & command-opts#]
-                  (apply fn# conn# params# opts# command-opts#)))))
-     queries#))
+    `(let [{snips# :snips fns# :fns :as queries#} (conman.core/load-queries '~filenames)]
+       (doseq [[id# {fn# :fn}] snips#]
+         (intern *ns* (symbol (name id#)) fn#))
+       (doseq [[id# {fn# :fn}] fns#]
+         (intern *ns* (symbol (name id#))
+                 (fn
+                   ([] (fn# ~conn {}))
+                   ([params#] (fn# ~conn params#))
+                   ([conn# params#] (fn# conn# params#))
+                   ([conn# params# opts# & command-opts#]
+                    (apply fn# conn# params# opts# command-opts#)))))
+       queries#))
 
 (defn- make-config
   [{:keys [jdbc-url datasource datasource-classname username
@@ -39,18 +47,18 @@
            max-lifetime min-idle max-pool-size pool-name]}]
   (let [cfg (HikariConfig.)
         uri (when jdbc-url (to-jdbc-uri jdbc-url))]
-    (when uri                  (.setJdbcUrl cfg uri))
-    (when datasource           (.setDataSource cfg datasource))
+    (when uri (.setJdbcUrl cfg uri))
+    (when datasource (.setDataSource cfg datasource))
     (when datasource-classname (.setDataSourceClassName cfg datasource-classname))
-    (when username             (.setUsername cfg username))
-    (when password             (.setPassword cfg password))
+    (when username (.setUsername cfg username))
+    (when password (.setPassword cfg password))
     (when (some? auto-commit?) (.setAutoCommit cfg auto-commit?))
-    (when conn-timeout         (.setConnectionTimeout cfg conn-timeout))
-    (when idle-timeout         (.setIdleTimeout cfg conn-timeout))
-    (when max-lifetime         (.setMaxLifetime cfg max-lifetime))
-    (when max-pool-size        (.setMaximumPoolSize cfg max-pool-size))
-    (when min-idle             (.setMinimumIdle cfg min-idle))
-    (when pool-name            (.setPoolName cfg pool-name))
+    (when conn-timeout (.setConnectionTimeout cfg conn-timeout))
+    (when idle-timeout (.setIdleTimeout cfg conn-timeout))
+    (when max-lifetime (.setMaxLifetime cfg max-lifetime))
+    (when max-pool-size (.setMaximumPoolSize cfg max-pool-size))
+    (when min-idle (.setMinimumIdle cfg min-idle))
+    (when pool-name (.setPoolName cfg pool-name))
     cfg))
 
 (defn connect!
