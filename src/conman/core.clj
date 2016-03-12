@@ -45,6 +45,8 @@
            max-lifetime min-idle max-pool-size pool-name]}]
   (let [cfg (HikariConfig.)
         uri (when jdbc-url (to-jdbc-uri jdbc-url))]
+    (when (not (or uri datasource datasource-classname ))
+      (throw (Exception. ":jdbc-url, :datasource, or :datasource-classname is required to initialize the connection!")))
     (when uri (.setJdbcUrl cfg uri))
     (when datasource (.setDataSource cfg datasource))
     (when datasource-classname (.setDataSourceClassName cfg datasource-classname))
