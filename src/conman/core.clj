@@ -8,7 +8,7 @@
 (defn validate-files [filenames]
   (doseq [file filenames]
     (when-not (io/resource file)
-      (throw (Exception. (str "conman to find the query file:" file))))))
+      (throw (Exception. (str "conman could not find the query file:" file))))))
 
 (defn load-queries [filenames]
   (validate-files filenames)
