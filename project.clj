@@ -1,4 +1,4 @@
-(defproject conman "0.4.6"
+(defproject conman "0.4.7"
   :description "a database connection management library"
   :url "https://github.com/luminus-framework/conman"
   :license {:name "Eclipse Public License"

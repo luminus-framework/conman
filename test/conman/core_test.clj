@@ -1,7 +1,8 @@
 (ns conman.core-test
   (:require [clojure.test :refer :all]
             [conman.core :refer :all]
-            [clojure.java.jdbc :as sql]))
+            [clojure.java.jdbc :as sql]
+            [clojure.repl :refer [doc]]))
 
 (defonce ^:dynamic conn
          {:classname   "org.h2.Driver"
@@ -30,6 +31,10 @@
  (fn [f]
    (create-test-table)
    (f)))
+
+(deftest doc-test
+  (is (= "-------------------------\nconman.core-test/get-fruit\n  gets fruit by name\n"
+         (with-out-str (doc get-fruit)))))
 
 (deftest transaction
   (with-transaction

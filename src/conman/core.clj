@@ -27,10 +27,10 @@
 
 (defmacro bind-connection [conn & filenames]
     `(let [{snips# :snips fns# :fns :as queries#} (conman.core/load-queries '~filenames)]
-       (doseq [[id# {fn# :fn}] snips#]
-         (intern *ns* (symbol (name id#)) fn#))
-       (doseq [[id# {fn# :fn}] fns#]
-         (intern *ns* (symbol (name id#))
+       (doseq [[id# {fn# :fn {doc# :doc} :meta}] snips#]
+         (intern *ns* (with-meta (symbol (name id#)) {:doc doc#}) fn#))
+       (doseq [[id# {fn# :fn {doc# :doc} :meta}] fns#]
+         (intern *ns* (with-meta (symbol (name id#)) {:doc doc#})
                  (fn
                    ([] (fn# ~conn {}))
                    ([params#] (fn# ~conn params#))
