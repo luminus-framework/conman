@@ -7,7 +7,7 @@
                  [com.zaxxer/HikariCP "2.4.3"]
                  [com.layerware/hugsql "0.4.7"]
                  [com.carouselapps/to-jdbc-uri "0.5.0"]
-                 [org.clojure/java.jdbc "0.5.8"]]
+                 [org.clojure/java.jdbc "0.6.0-rc1"]]
   :profiles
   {:dev
    {:dependencies [[com.h2database/h2 "1.4.191"]]}})
