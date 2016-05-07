@@ -2,10 +2,11 @@
   (:require [clojure.test :refer :all]
             [conman.core :refer :all]
             [clojure.java.jdbc :as sql]
-            [clojure.repl :refer [doc]]))
+            [clojure.repl :refer [doc]]
+            [clojure.java.io :as io]))
 
 (defonce ^:dynamic conn
-         {:classname   "org.h2.Driver"
+         {:classname      "org.h2.Driver"
           :connection-uri "jdbc:h2:./test.db"
           :make-pool?     true
           :naming         {:keys   clojure.string/lower-case
@@ -13,24 +14,29 @@
 
 (bind-connection conn "queries.sql")
 
+(defn delete-test-db []
+  (io/delete-file "test.db.mv.db" true)
+  (io/delete-file "test.db.trace.db" true))
+
 (defn create-test-table []
   (sql/db-do-commands
-   conn
-   "DROP TABLE fruits IF EXISTS;"
-   (sql/create-table-ddl
-    :fruits
-    [:id :int "DEFAULT 0"]
-    [:name "VARCHAR(32)" "PRIMARY KEY"]
-    [:appearance "VARCHAR(32)"]
-    [:cost :int]
-    [:grade :int]
-    :table-spec "")))
+    conn
+    "DROP TABLE fruits IF EXISTS;"
+    (sql/create-table-ddl
+      :fruits
+      [[:id :int "DEFAULT 0"]
+       [:name "VARCHAR(32)" "PRIMARY KEY"]
+       [:appearance "VARCHAR(32)"]
+       [:cost :int]
+       [:grade :int]]
+      {:table-spec ""})))
 
 (use-fixtures
- :once
- (fn [f]
-   (create-test-table)
-   (f)))
+  :once
+  (fn [f]
+    (delete-test-db)
+    (create-test-table)
+    (f)))
 
 (deftest doc-test
   (is (= "-------------------------\nconman.core-test/get-fruit\n  gets fruit by name\n"
@@ -41,25 +47,25 @@
     [conn]
     (sql/db-set-rollback-only! conn)
     (is
-     (= 1
-        (add-fruit!
-         {:name "apple"
-          :appearance "red"
-          :cost 1
-          :grade 1})))
+      (= 1
+         (add-fruit!
+           {:name       "apple"
+            :appearance "red"
+            :cost       1
+            :grade      1})))
     (is
-     (= [{:appearance "red" :cost 1 :grade 1 :id 0 :name "apple"}]
-        (get-fruit {:name "apple"}))))
+      (= [{:appearance "red" :cost 1 :grade 1 :id 0 :name "apple"}]
+         (get-fruit {:name "apple"}))))
   (is
-     (= []
-        (get-fruit {:name "apple"}))))
+    (= []
+       (get-fruit {:name "apple"}))))
 
 (deftest transaction-options
   (with-transaction
-    [conn :isolation :serializable]
+    [conn {:isolation :serializable}]
     (is (= java.sql.Connection/TRANSACTION_SERIALIZABLE
            (.getTransactionIsolation (sql/db-connection conn)))))
   (with-transaction
-    [conn :isolation :read-uncommitted]
+    [conn {:isolation :read-uncommitted}]
     (is (= java.sql.Connection/TRANSACTION_READ_UNCOMMITTED
            (.getTransactionIsolation (sql/db-connection conn))))))
