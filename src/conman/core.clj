@@ -2,6 +2,8 @@
   (:require [to-jdbc-uri.core :refer [to-jdbc-uri]]
             [hugsql.core :as hugsql]
             [clojure.java.io :as io]
+            [hikari-cp.core :refer [make-datasource datasource-config]]
+            [clojure.set :refer [rename-keys]]
             clojure.java.jdbc)
   (:import [com.zaxxer.hikari HikariConfig HikariDataSource]))
 
@@ -26,41 +28,33 @@
     filenames))
 
 (defmacro bind-connection [conn & filenames]
-    `(let [{snips# :snips fns# :fns :as queries#} (conman.core/load-queries '~filenames)]
-       (doseq [[id# {fn# :fn {doc# :doc} :meta}] snips#]
-         (intern *ns* (with-meta (symbol (name id#)) {:doc doc#}) fn#))
-       (doseq [[id# {fn# :fn {doc# :doc} :meta}] fns#]
-         (intern *ns* (with-meta (symbol (name id#)) {:doc doc#})
-                 (fn
-                   ([] (fn# ~conn {}))
-                   ([params#] (fn# ~conn params#))
-                   ([conn# params#] (fn# conn# params#))
-                   ([conn# params# opts# & command-opts#]
-                    (apply fn# conn# params# opts# command-opts#)))))
-       queries#))
+  `(let [{snips# :snips fns# :fns :as queries#} (conman.core/load-queries '~filenames)]
+     (doseq [[id# {fn# :fn {doc# :doc} :meta}] snips#]
+       (intern *ns* (with-meta (symbol (name id#)) {:doc doc#}) fn#))
+     (doseq [[id# {fn# :fn {doc# :doc} :meta}] fns#]
+       (intern *ns* (with-meta (symbol (name id#)) {:doc doc#})
+               (fn
+                 ([] (fn# ~conn {}))
+                 ([params#] (fn# ~conn params#))
+                 ([conn# params#] (fn# conn# params#))
+                 ([conn# params# opts# & command-opts#]
+                  (apply fn# conn# params# opts# command-opts#)))))
+     queries#))
 
-(defn- make-config
-  [{:keys [jdbc-url datasource datasource-classname username
-           password auto-commit? conn-timeout idle-timeout
-           max-lifetime min-idle max-pool-size pool-name]}]
-  (let [cfg (HikariConfig.)
-        uri (when jdbc-url (to-jdbc-uri jdbc-url))]
-    (when (not (or uri datasource datasource-classname ))
-      (throw (Exception. ":jdbc-url, :datasource, or :datasource-classname is required to initialize the connection!")))
-    (when uri (.setJdbcUrl cfg uri))
+(defn- make-config [{:keys [jdbc-url adapter datasource datasource-classname] :as pool-spec}]
+  (when (not (or jdbc-url adapter datasource datasource-classname))
+    (throw (Exception. "one of :jdbc-url, :adapter, :datasource, or :datasource-classname is required to initialize the connection!")))
+  (let [cfg (datasource-config
+              (-> pool-spec
+                  (update :jdbc-url #(when % (to-jdbc-uri %)))
+                  ;;backwards compatibility
+                  (rename-keys {:auto-commit?  :auto-commit
+                                :conn-timeout  :connection-timeout
+                                :min-idle      :minimum-idle
+                                :max-pool-size :maximum-pool-size})))]
     (when datasource (.setDataSource cfg datasource))
     (when datasource-classname (.setDataSourceClassName cfg datasource-classname))
-    (when username (.setUsername cfg username))
-    (when password (.setPassword cfg password))
-    (when (some? auto-commit?) (.setAutoCommit cfg auto-commit?))
-    (when conn-timeout (.setConnectionTimeout cfg conn-timeout))
-    (when idle-timeout (.setIdleTimeout cfg conn-timeout))
-    (when max-lifetime (.setMaxLifetime cfg max-lifetime))
-    (when max-pool-size (.setMaximumPoolSize cfg max-pool-size))
-    (when min-idle (.setMinimumIdle cfg min-idle))
-    (when pool-name (.setPoolName cfg pool-name))
     cfg))
-
 (defn connect!
   "attempts to create a new connection and set it as the value of the conn atom,
    does nothing if conn atom is already populated"

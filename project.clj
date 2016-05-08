@@ -1,4 +1,4 @@
-(defproject conman "0.5.2"
+(defproject conman "0.5.3"
   :description "a database connection management library"
   :url "https://github.com/luminus-framework/conman"
   :license {:name "Eclipse Public License"
@@ -7,7 +7,8 @@
                  [com.zaxxer/HikariCP "2.4.6"]
                  [com.layerware/hugsql "0.4.7"]
                  [com.carouselapps/to-jdbc-uri "0.5.0"]
-                 [org.clojure/java.jdbc "0.6.0-rc1"]]
+                 [org.clojure/java.jdbc "0.6.0-rc1"]
+                 [hikari-cp "1.6.1"]]
   :profiles
   {:dev
    {:dependencies [[com.h2database/h2 "1.4.191"]]}})

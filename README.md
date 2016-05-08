@@ -103,20 +103,10 @@ The function accepts a map with the database specification.
 (connect! pool-spec)
 ```
 
-The following options are supported:
+For the complete list of configuration options refer to the official [hikari-cp](https://github.com/tomekw/hikari-cp) library documentation. Conman supports the following additional options:
 
-* `:jdbc-url`
 * `:datasource`
 * `:datasource-classname`
-* `:username`
-* `:password`
-* `:auto-commit?`
-* `:conn-timeout`
-* `:idle-timeout`
-* `:max-lifetime`
-* `:min-idle`
-* `:max-pool-size`
-* `:pool-name`
 
 The connection can be terminated by running the `disconnect!` function:
 
