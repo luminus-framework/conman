@@ -56,7 +56,8 @@
                                 :connection-test-query
                                 :configure :leak-detection-threshold
                                 (keys BaseConfigurationOptions))
-        {:keys [auto-commit
+        {:keys [jdbc-url
+                auto-commit
                 configure
                 datasource
                 datasource-classname
@@ -74,6 +75,7 @@
                 leak-detection-threshold
                 register-mbeans
                 connection-init-sql]} options]
+    (if jdbc-url (.setJdbcUrl config (to-jdbc-uri jdbc-url)))
     ;; Set pool-specific properties
     (if auto-commit (.setAutoCommit config auto-commit))
     (if read-only (.setReadOnly config read-only))
@@ -103,19 +105,19 @@
         (add-datasource-property config k v))
     config))
 
-(defn make-config [{:keys [jdbc-url adapter datasource datasource-classname] :as pool-spec}]
+(defn make-config [{:keys [jdbc-url driver-class-name adapter datasource datasource-classname] :as pool-spec}]
   (when (not (or jdbc-url adapter datasource datasource-classname))
     (throw (Exception. "one of :jdbc-url, :adapter, :datasource, or :datasource-classname is required to initialize the connection!")))
-  (if (or datasource datasource-classname)
+  (if (or (and jdbc-url (nil? driver-class-name)) datasource datasource-classname)
     (direct-datasource-config pool-spec)
     (datasource-config
-      (-> pool-spec
-          (update :jdbc-url #(when % (to-jdbc-uri %)))
-          ;;backwards compatibility
-          (rename-keys {:auto-commit?  :auto-commit
-                        :conn-timeout  :connection-timeout
-                        :min-idle      :minimum-idle
-                        :max-pool-size :maximum-pool-size})))))
+      (rename-keys
+        pool-spec
+        {:auto-commit?  :auto-commit
+         :conn-timeout  :connection-timeout
+         :min-idle      :minimum-idle
+         :max-pool-size :maximum-pool-size}))))
+
 (defn connect!
   "attempts to create a new connection and set it as the value of the conn atom,
    does nothing if conn atom is already populated"
