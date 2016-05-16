@@ -42,6 +42,17 @@
   (is (= "-------------------------\nconman.core-test/get-fruit\n  gets fruit by name\n"
          (with-out-str (doc get-fruit)))))
 
+(deftest datasource
+  (is
+    (instance?
+      com.zaxxer.hikari.HikariConfig
+      (make-config
+        {:datasource
+         (doto (org.h2.jdbcx.JdbcDataSource.)
+           (.setURL "jdbc:h2:./test.db")
+           (.setUser "")
+           (.setPassword ""))}))))
+
 (deftest transaction
   (with-transaction
     [conn]
