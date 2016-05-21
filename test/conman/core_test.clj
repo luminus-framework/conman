@@ -6,8 +6,7 @@
             [clojure.java.io :as io]))
 
 (defonce ^:dynamic conn
-         {:classname      "org.h2.Driver"
-          :connection-uri "jdbc:h2:./test.db"
+         {:connection-uri "jdbc:h2:./test.db"
           :make-pool?     true
           :naming         {:keys   clojure.string/lower-case
                            :fields clojure.string/upper-case}})
@@ -52,6 +51,21 @@
            (.setURL "jdbc:h2:./test.db")
            (.setUser "")
            (.setPassword ""))}))))
+
+(deftest datasource-classname
+  (is
+    (instance?
+      com.zaxxer.hikari.HikariConfig
+      (make-config
+        {:datasource-classname "org.h2.Driver"
+         :jdbc-url "jdbc:h2:./test.db"}))))
+
+(deftest jdbc-url
+  (is
+    (instance?
+      com.zaxxer.hikari.HikariConfig
+      (make-config
+        {:jdbc-url "jdbc:h2:./test.db"}))))
 
 (deftest transaction
   (with-transaction
