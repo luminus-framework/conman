@@ -6,7 +6,7 @@
             [hikari-cp.core :refer [make-datasource datasource-config BaseConfigurationOptions]]
             [clojure.set :refer [rename-keys]]
             clojure.java.jdbc)
-  (:import [com.zaxxer.hikari HikariConfig HikariDataSource]))
+  (:import [com.zaxxer.hikari HikariDataSource]))
 
 (defn validate-files [filenames]
   (doseq [file filenames]
