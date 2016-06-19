@@ -23,18 +23,18 @@ the following content:
 
 ``` sql
 -- :name create-user! :! :n
--- creates a new user record
+-- :doc creates a new user record
 INSERT INTO users
 (id, first_name, last_name, email, pass)
 VALUES (:id, :first_name, :last_name, :email, :pass)
 
 -- :name get-user :? :1
--- retrieve a user given the id.
+-- :doc retrieve a user given the id.
 SELECT * FROM users
 WHERE id = :id
 
 -- :name get-all-users :? :*
--- retrieve all users.
+-- :doc retrieve all users.
 SELECT * FROM users
 ```
 See the official [HugSQL docs](http://www.hugsql.org/) for further examples.
