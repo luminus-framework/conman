@@ -20,7 +20,7 @@
       (let [{snips true
              fns   false}
             (group-by
-              #(-> % second :snip? boolean)
+              #(-> % second :meta :snip? boolean)
               (hugsql/map-of-db-fns file))]
         (-> queries
             (update :snips into snips)

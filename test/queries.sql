@@ -8,3 +8,10 @@ VALUES
 -- :doc gets fruit by name
 SELECT * FROM fruits
 WHERE name = :name
+
+-- :snip by-appearance
+appearance = :appearance
+
+-- :name get-fruit-by :? :1
+SELECT * FROM fruits
+WHERE :snip:by-appearance
