@@ -94,3 +94,15 @@
     [conn {:isolation :read-uncommitted}]
     (is (= java.sql.Connection/TRANSACTION_READ_UNCOMMITTED
            (.getTransactionIsolation (sql/db-connection conn))))))
+
+(deftest hugsql-snippets
+  (is (= 1
+         (add-fruit!
+          {:name "orange"
+           :appearance "orange"
+           :cost 1
+           :grade 1})))
+  (is (= "orange"
+         (:name
+          (get-fruit-by {:by-appearance
+                         (by-appearance {:appearance "orange"})})))))
