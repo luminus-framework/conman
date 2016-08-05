@@ -46,11 +46,8 @@
     (instance?
       com.zaxxer.hikari.HikariConfig
       (make-config
-        {:datasource
-         (doto (org.h2.jdbcx.JdbcDataSource.)
-           (.setURL "jdbc:h2:./test.db")
-           (.setUser "")
-           (.setPassword ""))}))))
+        {:jdbc-url "jdbc:h2:./test.db"
+         :datasource-classname "org.h2.Driver"}))))
 
 (deftest datasource-classname
   (is
