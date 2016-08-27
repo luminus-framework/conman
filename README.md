@@ -47,7 +47,7 @@ The lifecycle of the connection is expected to be managed using a library such a
 
 ```clojure
 (ns myapp.db
-  (:require [mount.core :as mount]
+  (:require [mount.core :refer [defstate]
             [conman.core :as conman]))
 
 (def pool-spec
