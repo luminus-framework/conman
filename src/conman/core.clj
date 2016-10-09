@@ -31,18 +31,21 @@
      filenames)))
 
 (defmacro bind-connection [conn & filenames]
-  `(let [{snips# :snips fns# :fns :as queries#} (conman.core/load-queries '~filenames)]
-     (doseq [[id# {fn# :fn {doc# :doc} :meta}] snips#]
-       (intern *ns* (with-meta (symbol (name id#)) {:doc doc#}) fn#))
-     (doseq [[id# {fn# :fn {doc# :doc} :meta}] fns#]
-       (intern *ns* (with-meta (symbol (name id#)) {:doc doc#})
-               (fn
-                 ([] (fn# ~conn {}))
-                 ([params#] (fn# ~conn params#))
-                 ([conn# params#] (fn# conn# params#))
-                 ([conn# params# opts# & command-opts#]
-                  (apply fn# conn# params# opts# command-opts#)))))
-     queries#))
+  (let [options? (map? (first filenames))
+        options (if options? (first filenames) {})
+        filenames (if options? (rest filenames) filenames)]
+    `(let [{snips# :snips fns# :fns :as queries#} (conman.core/load-queries '~filenames ~options)]
+       (doseq [[id# {fn# :fn {doc# :doc} :meta}] snips#]
+         (intern *ns* (with-meta (symbol (name id#)) {:doc doc#}) fn#))
+       (doseq [[id# {fn# :fn {doc# :doc} :meta}] fns#]
+         (intern *ns* (with-meta (symbol (name id#)) {:doc doc#})
+                 (fn
+                   ([] (fn# ~conn {}))
+                   ([params#] (fn# ~conn params#))
+                   ([conn# params#] (fn# conn# params#))
+                   ([conn# params# opts# & command-opts#]
+                    (apply fn# conn# params# opts# command-opts#)))))
+       queries#)))
 
 (defn make-config [{:keys [jdbc-url adapter datasource datasource-classname] :as pool-spec}]
   (when (not (or jdbc-url adapter datasource datasource-classname))
