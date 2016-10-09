@@ -13,20 +13,22 @@
     (when-not (io/resource file)
       (throw (Exception. (str "conman could not find the query file:" file))))))
 
-(defn load-queries [filenames]
-  (validate-files filenames)
-  (reduce
-    (fn [queries file]
-      (let [{snips true
-             fns   false}
-            (group-by
-              #(-> % second :meta :snip? boolean)
-              (hugsql/map-of-db-fns file))]
-        (-> queries
-            (update :snips into snips)
-            (update :fns into fns))))
-    {}
-    filenames))
+(defn load-queries
+  ([filenames] (load-queries filenames {}))
+  ([filenames options]
+   (validate-files filenames)
+   (reduce
+     (fn [queries file]
+       (let [{snips true
+              fns   false}
+             (group-by
+               #(-> % second :meta :snip? boolean)
+               (hugsql/map-of-db-fns file options))]
+         (-> queries
+             (update :snips into snips)
+             (update :fns into fns))))
+     {}
+     filenames)))
 
 (defmacro bind-connection [conn & filenames]
   `(let [{snips# :snips fns# :fns :as queries#} (conman.core/load-queries '~filenames)]
