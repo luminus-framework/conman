@@ -88,11 +88,7 @@ The function accepts a map with the database specification.
 
 ```clojure
 (def pool-spec
-  {:jdbc-url   "jdbc:postgresql://localhost/myapp?user=user&password=pass"
-   :init-size  1
-   :min-idle   1
-   :max-idle   4
-   :max-active 32})
+  {:jdbc-url   "jdbc:postgresql://localhost/myapp?user=user&password=pass"})
 
 (connect! pool-spec)
 ```
