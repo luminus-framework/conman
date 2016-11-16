@@ -89,7 +89,7 @@
   "Runs the body in a transaction where t-conn is the name of the transaction connection.
    The body will be evaluated within a binding where conn is set to the transactional
    connection. The isolation level and readonly status of the transaction may also be specified.
-   (with-transaction [conn :isolation level :read-only? true]
+   (with-transaction [conn {:isolation level :read-only? true}]
      ... t-conn ...)
    See clojure.java.jdbc/db-transaction* for more details on the semantics of the :isolation and
    :read-only? options."
