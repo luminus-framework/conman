@@ -10,4 +10,4 @@
                  [hikari-cp "1.7.5"]]
   :profiles
   {:dev
-   {:dependencies [[com.h2database/h2 "1.4.191"]]}})
+   {:dependencies [[com.h2database/h2 "1.4.195"]]}})
