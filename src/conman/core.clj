@@ -1,12 +1,10 @@
 (ns conman.core
-  (:require [to-jdbc-uri.core :refer [to-jdbc-uri]]
-            [hugsql.core :as hugsql]
-            [clojure.java.io :as io]
-            [org.tobereplaced.lettercase :refer [mixed-name]]
-            [hikari-cp.core :refer [make-datasource datasource-config BaseConfigurationOptions]]
+  (:require [clojure.java.io :as io]
+            clojure.java.jdbc
             [clojure.set :refer [rename-keys]]
-            clojure.java.jdbc)
-  (:import [com.zaxxer.hikari HikariDataSource]))
+            [hikari-cp.core :refer [datasource-config make-datasource]]
+            [hugsql.core :as hugsql]
+            [to-jdbc-uri.core :refer [to-jdbc-uri]]))
 
 (defn validate-files [filenames]
   (doseq [file filenames]
@@ -68,7 +66,7 @@
   "attempts to create a new connection and set it as the value of the conn atom,
    does nothing if conn atom is already populated"
   [pool-spec]
-  {:datasource (HikariDataSource. (make-config pool-spec))})
+  {:datasource (make-datasource (make-config pool-spec))})
 
 (defn disconnect!
   "checks if there's a connection and closes it
