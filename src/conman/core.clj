@@ -2,7 +2,7 @@
   (:require [clojure.java.io :as io]
             clojure.java.jdbc
             [clojure.set :refer [rename-keys]]
-            [hikari-cp.core :refer [datasource-config make-datasource]]
+            [hikari-cp.core :refer [make-datasource]]
             [hugsql.core :as hugsql]
             [to-jdbc-uri.core :refer [to-jdbc-uri]]))
 
