@@ -44,7 +44,7 @@
 (deftest datasource
   (is
     (instance?
-      com.zaxxer.hikari.HikariConfig
+     clojure.lang.PersistentArrayMap
       (make-config
         {:jdbc-url "jdbc:h2:./test.db"
          :datasource-classname "org.h2.Driver"}))))
@@ -52,7 +52,7 @@
 (deftest datasource-classname
   (is
     (instance?
-      com.zaxxer.hikari.HikariConfig
+     clojure.lang.PersistentArrayMap
       (make-config
         {:datasource-classname "org.h2.Driver"
          :jdbc-url "jdbc:h2:./test.db"}))))
@@ -60,7 +60,7 @@
 (deftest jdbc-url
   (is
     (instance?
-      com.zaxxer.hikari.HikariConfig
+      clojure.lang.PersistentArrayMap
       (make-config
         {:jdbc-url "jdbc:h2:./test.db"}))))
 

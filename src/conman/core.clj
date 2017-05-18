@@ -53,14 +53,13 @@
 (defn make-config [{:keys [jdbc-url adapter datasource datasource-classname] :as pool-spec}]
   (when (not (or jdbc-url adapter datasource datasource-classname))
     (throw (Exception. "one of :jdbc-url, :adapter, :datasource, or :datasource-classname is required to initialize the connection!")))
-  (datasource-config
-    (-> pool-spec
-        (format-url)
-        (rename-keys
-         {:auto-commit?  :auto-commit
-          :conn-timeout  :connection-timeout
-          :min-idle      :minimum-idle
-          :max-pool-size :maximum-pool-size}))))
+  (-> pool-spec
+      (format-url)
+      (rename-keys
+       {:auto-commit?  :auto-commit
+        :conn-timeout  :connection-timeout
+        :min-idle      :minimum-idle
+        :max-pool-size :maximum-pool-size})))
 
 (defn connect!
   "attempts to create a new connection and set it as the value of the conn atom,
