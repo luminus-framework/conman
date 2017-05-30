@@ -23,14 +23,36 @@
                #(-> % second :meta :snip? boolean)
                (hugsql/map-of-db-fns file options))]
          (-> queries
-             (update :snips into snips)
-             (update :fns into fns))))
+             (update :snips (fnil into {}) snips)
+             (update :fns (fnil into {}) fns))))
      {}
      filenames)))
 
+(defn query
+  "runs a database query and returns the result
+  conn    - database connection
+  queries - a map of queries
+  id      - keyword indicating the name of the query
+  args    - arguments that will be passed to the query"
+  [conn queries id & args]
+  (if-let [query (-> queries :fns id :fn)]
+    (apply query conn args)
+    (throw (Exception. (str "no query found for the key " id
+                            " available queries: " (keys queries))))))
+(defn snippet
+  "runs a SQL query snippet
+  queries - a map of queries
+  id      - keyword indicating the name of the query
+  args    - arguments that will be passed to the query"
+  [queries id & args]
+  (if-let [snip (-> queries :snips id :fn)]
+    (apply snip args)
+    (throw (Exception. (str "no snippet found for the key " id
+                            " available queries: " (keys queries))))))
+
 (defmacro bind-connection [conn & filenames]
-  (let [options? (map? (first filenames))
-        options (if options? (first filenames) {})
+  (let [options?  (map? (first filenames))
+        options   (if options? (first filenames) {})
         filenames (if options? (rest filenames) filenames)]
     `(let [{snips# :snips fns# :fns :as queries#} (conman.core/load-queries '~filenames ~options)]
        (doseq [[id# {fn# :fn {doc# :doc} :meta}] snips#]
@@ -56,10 +78,10 @@
   (-> pool-spec
       (format-url)
       (rename-keys
-       {:auto-commit?  :auto-commit
-        :conn-timeout  :connection-timeout
-        :min-idle      :minimum-idle
-        :max-pool-size :maximum-pool-size})))
+        {:auto-commit?  :auto-commit
+         :conn-timeout  :connection-timeout
+         :min-idle      :minimum-idle
+         :max-pool-size :maximum-pool-size})))
 
 (defn connect!
   "attempts to create a new connection and set it as the value of the conn atom,
@@ -92,5 +114,5 @@
    :read-only? options."
   [args & body]
   `(clojure.java.jdbc/with-db-transaction [t-conn# ~(first args) ~@(rest args)]
-                                          (binding [~(first args) t-conn#]
-                                            ~@body)))
+     (binding [~(first args) t-conn#]
+       ~@body)))

@@ -44,18 +44,18 @@
 (deftest datasource
   (is
     (instance?
-     clojure.lang.PersistentArrayMap
+      clojure.lang.PersistentArrayMap
       (make-config
-        {:jdbc-url "jdbc:h2:./test.db"
+        {:jdbc-url             "jdbc:h2:./test.db"
          :datasource-classname "org.h2.Driver"}))))
 
 (deftest datasource-classname
   (is
     (instance?
-     clojure.lang.PersistentArrayMap
+      clojure.lang.PersistentArrayMap
       (make-config
         {:datasource-classname "org.h2.Driver"
-         :jdbc-url "jdbc:h2:./test.db"}))))
+         :jdbc-url             "jdbc:h2:./test.db"}))))
 
 (deftest jdbc-url
   (is
@@ -95,11 +95,38 @@
 (deftest hugsql-snippets
   (is (= 1
          (add-fruit!
-          {:name "orange"
-           :appearance "orange"
-           :cost 1
-           :grade 1})))
+           {:name       "orange"
+            :appearance "orange"
+            :cost       1
+            :grade      1})))
   (is (= "orange"
          (:name
-          (get-fruit-by {:by-appearance
-                         (by-appearance {:appearance "orange"})})))))
+           (get-fruit-by {:by-appearance
+                          (by-appearance {:appearance "orange"})})))))
+
+
+
+(deftest explicit-queries
+  (let [queries (load-queries ["queries.sql"])]
+    (is (= 1
+           (query conn
+                  queries
+                  :add-fruit!
+                  {:name       "banana"
+                   :appearance "banana"
+                   :cost       1
+                   :grade      1})))
+    (is (= "banana"
+           (-> (query conn
+                      queries
+                      :get-fruit
+                      {:name "banana"})
+               first
+               :name)))
+    (is (= "banana"
+           (:name (query conn
+                         queries
+                         :get-fruit-by
+                         {:by-appearance
+                          (snippet queries :by-appearance {:appearance "banana"})}))))))
+
