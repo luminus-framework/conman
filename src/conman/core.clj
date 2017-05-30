@@ -37,9 +37,9 @@
   [conn queries id & args]
   (if-let [query (-> queries :fns id :fn)]
     (apply query conn args)
-    (throw (Exception. (str "no query found for the key " id
-                            " available queries: " (keys queries))))))
-(defn snippet
+    (throw (Exception. (str "no query found for the key '" id
+                            "', available queries: " (keys (:fns queries)))))))
+(defn snip
   "runs a SQL query snippet
   queries - a map of queries
   id      - keyword indicating the name of the query
@@ -47,8 +47,8 @@
   [queries id & args]
   (if-let [snip (-> queries :snips id :fn)]
     (apply snip args)
-    (throw (Exception. (str "no snippet found for the key " id
-                            " available queries: " (keys queries))))))
+    (throw (Exception. (str "no snippet found for the key '" id
+                            "', available queries: " (keys (:snpis queries)))))))
 
 (defmacro bind-connection [conn & filenames]
   (let [options?  (map? (first filenames))

@@ -128,5 +128,32 @@
                          queries
                          :get-fruit-by
                          {:by-appearance
-                          (snippet queries :by-appearance {:appearance "banana"})}))))))
-
+                          (snip queries :by-appearance {:appearance "banana"})}))))
+    (query
+      conn
+      queries
+      :add-fruit!
+      {:name       "foo"
+       :appearance "foo"
+       :cost       1
+       :grade      1})
+    (try
+      (with-transaction [conn]
+        (query
+          conn
+          queries
+          :add-fruit!
+          {:name       "baz"
+           :appearance "baz"
+           :cost       1
+           :grade      1})
+        (query
+          conn
+          queries
+          :add-fruit!
+          {:name       "foo"
+           :appearance "foo"
+           :cost       1
+           :grade      1}))
+      (catch Exception _))
+    (is (= [] (query conn queries :get-fruit {:name "baz"})))))
