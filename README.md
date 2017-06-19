@@ -42,7 +42,7 @@ See the official [HugSQL docs](http://www.hugsql.org/) for further examples.
 The queries are bound to the connection using the `bind-connection` macro. This macro
 accepts the connection var followed by one or more strings representing SQL query files.
 
-The lifecycle of the connection is expected to be managed using a library such as [mount](https://github.com/tolitius/mount). The full list of options hat can be passed to `pool-spec` can be found [here](https://github.com/tomekw/hikari-cp#configuration-options).
+The lifecycle of the connection is expected to be managed using a library such as [mount](https://github.com/tolitius/mount). The full list of options that can be passed to `pool-spec` can be found [here](https://github.com/tomekw/hikari-cp#configuration-options).
 
 
 ```clojure
