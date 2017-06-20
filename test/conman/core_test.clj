@@ -20,15 +20,15 @@
 (defn create-test-table []
   (sql/db-do-commands
     conn
-    "DROP TABLE fruits IF EXISTS;"
-    (sql/create-table-ddl
-      :fruits
-      [[:id :int "DEFAULT 0"]
-       [:name "VARCHAR(32)" "PRIMARY KEY"]
-       [:appearance "VARCHAR(32)"]
-       [:cost :int]
-       [:grade :int]]
-      {:table-spec ""})))
+    ["DROP TABLE fruits IF EXISTS;"
+     (sql/create-table-ddl
+       :fruits
+       [[:id :int "DEFAULT 0"]
+        [:name "VARCHAR(32)" "PRIMARY KEY"]
+        [:appearance "VARCHAR(32)"]
+        [:cost :int]
+        [:grade :int]]
+       {:table-spec ""})]))
 
 (use-fixtures
   :once
