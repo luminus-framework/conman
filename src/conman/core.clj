@@ -56,15 +56,24 @@
         filenames (if options? (rest filenames) filenames)]
     `(let [{snips# :snips fns# :fns :as queries#} (conman.core/load-queries '~filenames ~options)]
        (doseq [[id# {fn# :fn {doc# :doc} :meta}] snips#]
-         (intern *ns* (with-meta (symbol (name id#)) {:doc doc#}) fn#))
+         (intern *ns* (with-meta (symbol (name id#)) {:doc doc#})
+                 (fn [& args#]
+                   (try (apply fn# args#)
+                        (catch Exception e#
+                          (throw (Exception. (format "Exception in %s" id#) e#)))))))
        (doseq [[id# {fn# :fn {doc# :doc} :meta}] fns#]
          (intern *ns* (with-meta (symbol (name id#)) {:doc doc#})
-                 (fn
-                   ([] (fn# ~conn {}))
-                   ([params#] (fn# ~conn params#))
-                   ([conn# params#] (fn# conn# params#))
+                 (fn f#
+                   ([] (f# ~conn {}))
+                   ([params#] (f# ~conn params#))
+                   ([conn# params#]
+                    (try (fn# conn# params#)
+                         (catch Exception e#
+                           (throw (Exception. (format "Exception in %s" id#) e#)))))
                    ([conn# params# opts# & command-opts#]
-                    (apply fn# conn# params# opts# command-opts#)))))
+                    (try (apply fn# conn# params# opts# command-opts#)
+                         (catch Exception e#
+                           (throw (Exception (format "Exception in %s" id#) e#))))))))
        queries#)))
 
 (defn- format-url [pool-spec]
