@@ -73,7 +73,7 @@
                    ([conn# params# opts# & command-opts#]
                     (try (apply fn# conn# params# opts# command-opts#)
                          (catch Exception e#
-                           (throw (Exception (format "Exception in %s" id#) e#))))))))
+                           (throw (Exception. (format "Exception in %s" id#) e#))))))))
        queries#)))
 
 (defn- format-url [pool-spec]
