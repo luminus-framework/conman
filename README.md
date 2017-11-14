@@ -83,6 +83,15 @@ in the current namespace. These functions can be called in four different ways:
 
 ```
 
+Alternatively, if you prefer `:cljc` mode of mount, where you would need to explicitly `deref` each state,
+you can use the following form:
+
+```clojure
+(mount/in-cljc-mode)
+
+(conman/bind-connection #(deref *db*) "sql/queries.sql")
+```
+
 Next, the `connect!` function should be called to initialize the database connection.
 The function accepts a map with the database specification.
 

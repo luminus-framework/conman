@@ -64,14 +64,14 @@
        (doseq [[id# {fn# :fn {doc# :doc} :meta}] fns#]
          (intern *ns* (with-meta (symbol (name id#)) {:doc doc#})
                  (fn f#
-                   ([] (f# ~conn {}))
-                   ([params#] (f# ~conn params#))
+                   ([] (f# (if (fn? ~conn) (~conn) ~conn) {}))
+                   ([params#] (f# (if (fn? ~conn) (~conn) ~conn) params#))
                    ([conn# params#]
-                    (try (fn# conn# params#)
+                    (try (fn# (if (fn? conn#) (conn#) conn#) params#)
                          (catch Exception e#
                            (throw (Exception. (format "Exception in %s" id#) e#)))))
                    ([conn# params# opts# & command-opts#]
-                    (try (apply fn# conn# params# opts# command-opts#)
+                    (try (apply fn# (if (fn? conn#) (conn#) conn#) params# opts# command-opts#)
                          (catch Exception e#
                            (throw (Exception. (format "Exception in %s" id#) e#))))))))
        queries#)))
