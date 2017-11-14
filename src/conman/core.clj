@@ -74,11 +74,11 @@
                    ([] (f# (resolve-conn ~conn) {}))
                    ([params#] (f# (resolve-conn ~conn) params#))
                    ([conn# params#]
-                    (try (fn# (resolve-conn conn#) params#)
+                    (try (fn# conn# params#)
                          (catch Exception e#
                            (throw (Exception. (format "Exception in %s" id#) e#)))))
                    ([conn# params# opts# & command-opts#]
-                    (try (apply fn# (resolve-conn conn#) params# opts# command-opts#)
+                    (try (apply fn# conn# params# opts# command-opts#)
                          (catch Exception e#
                            (throw (Exception. (format "Exception in %s" id#) e#))))))))
        queries#)))
