@@ -83,13 +83,21 @@ in the current namespace. These functions can be called in four different ways:
 
 ```
 
-Alternatively, if you prefer `:cljc` mode of mount, where you would need to explicitly `deref` each state,
-you can use the following form:
+If you use `:cljc` [mode of mount](https://github.com/tolitius/mount/blob/master/doc/clojurescript.md#clojure-and-clojurescript-mode),
+where you would need to explicitly `deref` each state,
+`conman/bind-connection` and `conman/with-transaction` macros still accept undereferenced state,
+while in every other case it has to be dereferenced:
 
 ```clojure
 (mount/in-cljc-mode)
 
-(conman/bind-connection #(deref *db*) "sql/queries.sql")
+(conman/bind-connection *db* "sql/queries.sql")
+
+(conman/with-transaction [*db*]
+  (sql/db-set-rollback-only! @*db*)
+  (add-memo! {:id 123 :text "Hello"})
+  (sql/query @*db* ["SELECT * FROM memos;"]))
+
 ```
 
 Next, the `connect!` function should be called to initialize the database connection.

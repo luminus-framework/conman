@@ -4,7 +4,8 @@
             [clojure.set :refer [rename-keys]]
             [hikari-cp.core :refer [make-datasource]]
             [hugsql.core :as hugsql]
-            [to-jdbc-uri.core :refer [to-jdbc-uri]]))
+            [to-jdbc-uri.core :refer [to-jdbc-uri]])
+  (:import (clojure.lang IDeref)))
 
 (defn validate-files [filenames]
   (doseq [file filenames]
@@ -50,6 +51,12 @@
     (throw (Exception. (str "no snippet found for the key '" id
                             "', available queries: " (keys (:snpis queries)))))))
 
+(defn resolve-conn [conn]
+  (cond
+    (fn? conn) (conn)
+    (instance? IDeref conn) (deref conn)
+    :else conn))
+
 (defmacro bind-connection [conn & filenames]
   (let [options?  (map? (first filenames))
         options   (if options? (first filenames) {})
@@ -64,14 +71,14 @@
        (doseq [[id# {fn# :fn {doc# :doc} :meta}] fns#]
          (intern *ns* (with-meta (symbol (name id#)) {:doc doc#})
                  (fn f#
-                   ([] (f# (if (fn? ~conn) (~conn) ~conn) {}))
-                   ([params#] (f# (if (fn? ~conn) (~conn) ~conn) params#))
+                   ([] (f# (resolve-conn ~conn) {}))
+                   ([params#] (f# (resolve-conn ~conn) params#))
                    ([conn# params#]
-                    (try (fn# (if (fn? conn#) (conn#) conn#) params#)
+                    (try (fn# (resolve-conn conn#) params#)
                          (catch Exception e#
                            (throw (Exception. (format "Exception in %s" id#) e#)))))
                    ([conn# params# opts# & command-opts#]
-                    (try (apply fn# (if (fn? conn#) (conn#) conn#) params# opts# command-opts#)
+                    (try (apply fn# (resolve-conn conn#) params# opts# command-opts#)
                          (catch Exception e#
                            (throw (Exception. (format "Exception in %s" id#) e#))))))))
        queries#)))
@@ -121,7 +128,11 @@
      ... t-conn ...)
    See clojure.java.jdbc/db-transaction* for more details on the semantics of the :isolation and
    :read-only? options."
-  [args & body]
-  `(clojure.java.jdbc/with-db-transaction [t-conn# ~(first args) ~@(rest args)]
-     (binding [~(first args) t-conn#]
-       ~@body)))
+  [[dbsym & opts] & body]
+  `(if (instance? IDeref ~dbsym)
+     (clojure.java.jdbc/with-db-transaction [t-conn# (deref ~dbsym) ~@opts]
+       (binding [~dbsym (delay t-conn#)]
+         ~@body))
+     (clojure.java.jdbc/with-db-transaction [t-conn# ~dbsym ~@opts]
+       (binding [~dbsym t-conn#]
+         ~@body))))
