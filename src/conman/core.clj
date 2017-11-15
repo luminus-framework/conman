@@ -51,12 +51,6 @@
     (throw (Exception. (str "no snippet found for the key '" id
                             "', available queries: " (keys (:snpis queries)))))))
 
-(defn resolve-conn [conn]
-  (cond
-    (fn? conn) (conn)
-    (instance? IDeref conn) (deref conn)
-    :else conn))
-
 (defmacro bind-connection [conn & filenames]
   (let [options?  (map? (first filenames))
         options   (if options? (first filenames) {})
@@ -70,17 +64,30 @@
                           (throw (Exception. (format "Exception in %s" id#) e#)))))))
        (doseq [[id# {fn# :fn {doc# :doc} :meta}] fns#]
          (intern *ns* (with-meta (symbol (name id#)) {:doc doc#})
-                 (fn f#
-                   ([] (f# (resolve-conn ~conn) {}))
-                   ([params#] (f# (resolve-conn ~conn) params#))
-                   ([conn# params#]
-                    (try (fn# conn# params#)
-                         (catch Exception e#
-                           (throw (Exception. (format "Exception in %s" id#) e#)))))
-                   ([conn# params# opts# & command-opts#]
-                    (try (apply fn# conn# params# opts# command-opts#)
-                         (catch Exception e#
-                           (throw (Exception. (format "Exception in %s" id#) e#))))))))
+                 (if (instance? IDeref ~conn)
+                   (fn f#
+                     ([] (f# (deref ~conn) {}))
+                     ([params#] (f# (deref ~conn) params#))
+                     ([conn# params#]
+                      (try (fn# conn# params#)
+                           (catch Exception e#
+                             (throw (Exception. (format "Exception in %s" id#) e#)))))
+                     ([conn# params# opts# & command-opts#]
+                      (try (apply fn# conn# params# opts# command-opts#)
+                           (catch Exception e#
+                             (throw (Exception. (format "Exception in %s" id#) e#))))))
+                   (fn f#
+                     ([] (f# ~conn {}))
+                     ([params#] (f# ~conn params#))
+                     ([conn# params#]
+                      (try (fn# conn# params#)
+                           (catch Exception e#
+                             (throw (Exception. (format "Exception in %s" id#) e#)))))
+                     ([conn# params# opts# & command-opts#]
+                      (try (apply fn# conn# params# opts# command-opts#)
+                           (catch Exception e#
+                             (throw (Exception. (format "Exception in %s" id#) e#)))))))
+                 ))
        queries#)))
 
 (defn- format-url [pool-spec]
