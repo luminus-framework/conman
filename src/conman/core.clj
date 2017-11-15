@@ -4,7 +4,8 @@
             [clojure.set :refer [rename-keys]]
             [hikari-cp.core :refer [make-datasource]]
             [hugsql.core :as hugsql]
-            [to-jdbc-uri.core :refer [to-jdbc-uri]]))
+            [to-jdbc-uri.core :refer [to-jdbc-uri]])
+  (:import (clojure.lang IDeref)))
 
 (defn validate-files [filenames]
   (doseq [file filenames]
@@ -63,17 +64,30 @@
                           (throw (Exception. (format "Exception in %s" id#) e#)))))))
        (doseq [[id# {fn# :fn {doc# :doc} :meta}] fns#]
          (intern *ns* (with-meta (symbol (name id#)) {:doc doc#})
-                 (fn f#
-                   ([] (f# (if (fn? ~conn) (~conn) ~conn) {}))
-                   ([params#] (f# (if (fn? ~conn) (~conn) ~conn) params#))
-                   ([conn# params#]
-                    (try (fn# (if (fn? conn#) (conn#) conn#) params#)
-                         (catch Exception e#
-                           (throw (Exception. (format "Exception in %s" id#) e#)))))
-                   ([conn# params# opts# & command-opts#]
-                    (try (apply fn# (if (fn? conn#) (conn#) conn#) params# opts# command-opts#)
-                         (catch Exception e#
-                           (throw (Exception. (format "Exception in %s" id#) e#))))))))
+                 (if (instance? IDeref ~conn)
+                   (fn f#
+                     ([] (f# (deref ~conn) {}))
+                     ([params#] (f# (deref ~conn) params#))
+                     ([conn# params#]
+                      (try (fn# conn# params#)
+                           (catch Exception e#
+                             (throw (Exception. (format "Exception in %s" id#) e#)))))
+                     ([conn# params# opts# & command-opts#]
+                      (try (apply fn# conn# params# opts# command-opts#)
+                           (catch Exception e#
+                             (throw (Exception. (format "Exception in %s" id#) e#))))))
+                   (fn f#
+                     ([] (f# ~conn {}))
+                     ([params#] (f# ~conn params#))
+                     ([conn# params#]
+                      (try (fn# conn# params#)
+                           (catch Exception e#
+                             (throw (Exception. (format "Exception in %s" id#) e#)))))
+                     ([conn# params# opts# & command-opts#]
+                      (try (apply fn# conn# params# opts# command-opts#)
+                           (catch Exception e#
+                             (throw (Exception. (format "Exception in %s" id#) e#)))))))
+                 ))
        queries#)))
 
 (defn- format-url [pool-spec]
@@ -121,7 +135,11 @@
      ... t-conn ...)
    See clojure.java.jdbc/db-transaction* for more details on the semantics of the :isolation and
    :read-only? options."
-  [args & body]
-  `(clojure.java.jdbc/with-db-transaction [t-conn# ~(first args) ~@(rest args)]
-     (binding [~(first args) t-conn#]
-       ~@body)))
+  [[dbsym & opts] & body]
+  `(if (instance? IDeref ~dbsym)
+     (clojure.java.jdbc/with-db-transaction [t-conn# (deref ~dbsym) ~@opts]
+       (binding [~dbsym (delay t-conn#)]
+         ~@body))
+     (clojure.java.jdbc/with-db-transaction [t-conn# ~dbsym ~@opts]
+       (binding [~dbsym t-conn#]
+         ~@body))))
