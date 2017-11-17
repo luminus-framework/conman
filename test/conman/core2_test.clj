@@ -12,7 +12,7 @@
           :naming         {:keys   clojure.string/lower-case
                            :fields clojure.string/upper-case}})
 
-(bind-connection conn2 "queries.sql")
+(bind-connection-deref conn2 "queries.sql")
 
 (defn delete-test-db []
   (io/delete-file "test.db.mv.db" true)
