@@ -84,14 +84,14 @@ in the current namespace. These functions can be called in four different ways:
 ```
 
 If you use `:cljc` [mode of mount](https://github.com/tolitius/mount/blob/master/doc/clojurescript.md#clojure-and-clojurescript-mode),
-where you would need to explicitly `deref` each state,
-`conman/bind-connection` and `conman/with-transaction` macros still accept undereferenced state,
+where you would need to explicitly `deref` each state, you'll need to use `conman/bind-connection-deref` instead of
+`conman/bind-connection`. Both `conman/bind-connection-deref` and `conman/with-transaction` macros still accept undereferenced state,
 while in every other case it has to be dereferenced:
 
 ```clojure
 (mount/in-cljc-mode)
 
-(conman/bind-connection *db* "sql/queries.sql")
+(conman/bind-connection-deref *db* "sql/queries.sql")
 
 (conman/with-transaction [*db*]
   (sql/db-set-rollback-only! @*db*)

@@ -64,30 +64,43 @@
                           (throw (Exception. (format "Exception in %s" id#) e#)))))))
        (doseq [[id# {fn# :fn {doc# :doc} :meta}] fns#]
          (intern *ns* (with-meta (symbol (name id#)) {:doc doc#})
-                 (if (instance? IDeref ~conn)
-                   (fn f#
-                     ([] (f# (deref ~conn) {}))
-                     ([params#] (f# (deref ~conn) params#))
-                     ([conn# params#]
-                      (try (fn# conn# params#)
-                           (catch Exception e#
-                             (throw (Exception. (format "Exception in %s" id#) e#)))))
-                     ([conn# params# opts# & command-opts#]
-                      (try (apply fn# conn# params# opts# command-opts#)
-                           (catch Exception e#
-                             (throw (Exception. (format "Exception in %s" id#) e#))))))
-                   (fn f#
-                     ([] (f# ~conn {}))
-                     ([params#] (f# ~conn params#))
-                     ([conn# params#]
-                      (try (fn# conn# params#)
-                           (catch Exception e#
-                             (throw (Exception. (format "Exception in %s" id#) e#)))))
-                     ([conn# params# opts# & command-opts#]
-                      (try (apply fn# conn# params# opts# command-opts#)
-                           (catch Exception e#
-                             (throw (Exception. (format "Exception in %s" id#) e#)))))))
-                 ))
+                 (fn f#
+                   ([] (f# ~conn {}))
+                   ([params#] (f# ~conn params#))
+                   ([conn# params#]
+                    (try (fn# conn# params#)
+                         (catch Exception e#
+                           (throw (Exception. (format "Exception in %s" id#) e#)))))
+                   ([conn# params# opts# & command-opts#]
+                    (try (apply fn# conn# params# opts# command-opts#)
+                         (catch Exception e#
+                           (throw (Exception. (format "Exception in %s" id#) e#))))))))
+       queries#)))
+
+(defmacro bind-connection-deref [conn & filenames]
+  (let [options?  (map? (first filenames))
+        options   (if options? (first filenames) {})
+        filenames (if options? (rest filenames) filenames)]
+    `(let [{snips# :snips fns# :fns :as queries#} (conman.core/load-queries '~filenames ~options)]
+       (doseq [[id# {fn# :fn {doc# :doc} :meta}] snips#]
+         (intern *ns* (with-meta (symbol (name id#)) {:doc doc#})
+                 (fn [& args#]
+                   (try (apply fn# args#)
+                        (catch Exception e#
+                          (throw (Exception. (format "Exception in %s" id#) e#)))))))
+       (doseq [[id# {fn# :fn {doc# :doc} :meta}] fns#]
+         (intern *ns* (with-meta (symbol (name id#)) {:doc doc#})
+                 (fn f#
+                   ([] (f# (deref ~conn) {}))
+                   ([params#] (f# (deref ~conn) params#))
+                   ([conn# params#]
+                    (try (fn# conn# params#)
+                         (catch Exception e#
+                           (throw (Exception. (format "Exception in %s" id#) e#)))))
+                   ([conn# params# opts# & command-opts#]
+                    (try (apply fn# conn# params# opts# command-opts#)
+                         (catch Exception e#
+                           (throw (Exception. (format "Exception in %s" id#) e#))))))))
        queries#)))
 
 (defn- format-url [pool-spec]

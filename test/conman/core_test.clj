@@ -3,10 +3,12 @@
             [conman.core :refer :all]
             [clojure.java.jdbc :as sql]
             [clojure.repl :refer [doc]]
-            [clojure.java.io :as io]))
+            [clojure.java.io :as io]
+            [mount.core :as m])
+  (:import (clojure.lang IDeref)))
 
-(defonce ^:dynamic conn
-         {:connection-uri "jdbc:h2:./test.db"
+(m/defstate ^:dynamic conn
+  :start {:connection-uri "jdbc:h2:./test.db"
           :make-pool?     true
           :naming         {:keys   clojure.string/lower-case
                            :fields clojure.string/upper-case}})
@@ -33,9 +35,12 @@
 (use-fixtures
   :once
   (fn [f]
+    (m/in-clj-mode)
+    (m/start #'conn)
     (delete-test-db)
     (create-test-table)
-    (f)))
+    (f)
+    (m/stop)))
 
 (deftest doc-test
   (is (= "-------------------------\nconman.core-test/get-fruit\n  gets fruit by name\n"
@@ -100,9 +105,9 @@
             :cost       1
             :grade      1})))
   (is (= "orange"
-         (:name
-           (get-fruit-by {:by-appearance
-                          (by-appearance {:appearance "orange"})})))))
+           (:name
+             (get-fruit-by {:by-appearance
+                            (by-appearance {:appearance "orange"})})))))
 
 
 

@@ -10,4 +10,5 @@
                  [hikari-cp "1.8.1"]]
   :profiles
   {:dev
-   {:dependencies [[com.h2database/h2 "1.4.196"]]}})
+   {:dependencies [[com.h2database/h2 "1.4.196"]
+                   [mount "0.1.11"]]}})
