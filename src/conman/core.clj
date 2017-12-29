@@ -83,7 +83,7 @@
         filenames (if options? (rest filenames) filenames)]
     `(let [{snips# :snips fns# :fns :as queries#} (conman.core/load-queries '~filenames ~options)]
        (doseq [[id# {fn# :fn meta# :meta}] snips#]
-         (intern *ns* (with-meta (symbol (name id#)) {:doc doc#})
+         (intern *ns* (with-meta (symbol (name id#)) meta#)
                  (fn [& args#]
                    (try (apply fn# args#)
                         (catch Exception e#
