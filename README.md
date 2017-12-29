@@ -1,5 +1,7 @@
 # conman
 
+![status](https://circleci.com/gh/luminus-framework/conman.svg?style=shield&circle-token=da462d56802b9a0ff94ecc7992d1d0caf8475d00)
+
 Luminus database connection management and SQL query generation library
 
 The library provides pooled connections using the [HikariCP](https://github.com/brettwooldridge/HikariCP) library.
