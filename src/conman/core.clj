@@ -49,7 +49,7 @@
   (if-let [snip (-> queries :snips id :fn)]
     (apply snip args)
     (throw (Exception. (str "no snippet found for the key '" id
-                            "', available queries: " (keys (:snpis queries)))))))
+                            "', available queries: " (keys (:snips queries)))))))
 
 (defmacro bind-connection [conn & filenames]
   (let [options?  (map? (first filenames))
