@@ -105,11 +105,9 @@
             :cost       1
             :grade      1})))
   (is (= "orange"
-           (:name
-             (get-fruit-by {:by-appearance
-                            (by-appearance {:appearance "orange"})})))))
-
-
+         (:name
+           (get-fruit-by {:by-appearance
+                          (by-appearance {:appearance "orange"})})))))
 
 (deftest explicit-queries
   (let [queries (load-queries ["queries.sql"])]
@@ -162,3 +160,34 @@
            :grade      1}))
       (catch Exception _))
     (is (= [] (query conn queries :get-fruit {:name "baz"})))))
+
+(deftest query-map
+  (let [queries (bind-connection-map conn "queries.sql")]
+    (is (= 1
+           (query
+             queries
+             :add-fruit!
+             {:name       "apple"
+              :appearance "red"
+              :cost       1
+              :grade      1})))
+
+    (is (= [{:id 0, :name "apple", :appearance "red", :cost 1, :grade 1}]
+           (query queries :get-fruit {:name "apple"})))
+
+    (is (= ["appearance = ?" "red"]
+           (snip queries :by-appearance {:appearance "red"})))
+    (is
+      (=
+        {:id 0, :name "apple", :appearance "red", :cost 1, :grade 1}
+        (query
+          conn
+          queries
+          :get-fruit-by
+          {:by-appearance
+           (snip queries :by-appearance {:appearance "red"})})))))
+
+(deftest queries-from-file-object
+  (let [{:keys [snips fns]} (bind-connection-map conn (java.io.File. "test/queries.sql"))]
+    (is (= #{:by-appearance} (set (keys snips))))
+    (is (= #{:add-fruit! :get-fruit :get-fruit-by} (set (keys fns))))))

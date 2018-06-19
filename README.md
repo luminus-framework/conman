@@ -41,6 +41,8 @@ SELECT * FROM users
 ```
 See the official [HugSQL docs](http://www.hugsql.org/) for further examples.
 
+### Using `bind-connection`
+
 The queries are bound to the connection using the `bind-connection` macro. This macro
 accepts the connection var followed by one or more strings representing SQL query files.
 
@@ -82,7 +84,48 @@ in the current namespace. These functions can be called in four different ways:
 ;; can be passed to the function
 (get-user some-other-conn {:id "foo"} opts)
 (get-user some-other-conn {:id "foo"} opts cmd-opt1 cmd-opt2)
+```
 
+### Using `bind-connection-map`
+
+Alternatively, you may wish to use `bind-connection-map` to define the queries. This function will return
+a map containing `:snips` and `:fns` keys that point to maps of snippets and queries respectively.
+The `snip` and `query` helper functions are provided for accessing the connection map returned by the `bind-connection-map`
+function.
+
+```clojure
+;; create a connection map given the connection instance and one or more query files:
+(def queries (bind-connection-map conn "queries.sql"))
+
+;; a HugSQL options map can be passed as the second argument:
+(def queries (bind-connection-map conn {:quoting :ansi} "queries.sql"))
+
+;; run a query
+(query
+  queries
+  :add-fruit!
+  {:name       "apple"
+   :appearance "red"
+   :cost       1
+   :grade      1})
+
+;; run a query specifying the connection explicitly
+(query
+  conn
+  queries
+  :add-fruit!
+  {:name       "apple"
+   :appearance "red"
+   :cost       1
+   :grade      1})
+
+;; run a query with a snippet
+(query
+  conn
+  queries
+  :get-fruit-by
+  {:by-appearance
+   (snip queries :by-appearance {:appearance "red"})})
 ```
 
 If you use `:cljc` [mode of mount](https://github.com/tolitius/mount/blob/master/doc/clojurescript.md#clojure-and-clojurescript-mode),

@@ -9,25 +9,111 @@
 
 (defn validate-files [filenames]
   (doseq [file filenames]
-    (when-not (io/resource file)
+    (when-not (or (instance? java.io.File file) (io/resource file))
       (throw (Exception. (str "conman could not find the query file:" file))))))
 
-(defn load-queries
-  ([filenames] (load-queries filenames {}))
-  ([filenames options]
-   (validate-files filenames)
-   (reduce
-     (fn [queries file]
-       (let [{snips true
-              fns   false}
-             (group-by
-               #(-> % second :meta :snip? boolean)
-               (hugsql/map-of-db-fns file options))]
-         (-> queries
-             (update :snips (fnil into {}) snips)
-             (update :fns (fnil into {}) fns))))
-     {}
-     filenames)))
+(defn try-snip [[id snip]]
+  [id
+   (update snip :fn
+           (fn [snip]
+             (fn f# [& args]
+               (try (apply snip args)
+                    (catch Exception e
+                      (throw (Exception. (format "Exception in %s" id) e)))))))])
+
+(defn try-query [[id query]]
+  [id
+   (update query :fn
+           (fn [query]
+             (fn f#
+               ([conn params]
+                (try (query conn params)
+                     (catch Exception e
+                       (throw (Exception. (format "Exception in %s" id) e)))))
+               ([conn params opts & command-opts]
+                (try (apply query conn params opts command-opts)
+                     (catch Exception e
+                       (throw (Exception. (format "Exception in %s" id) e))))))))])
+
+(defn load-queries [args]
+  (let [options?  (map? (first args))
+        options   (if options? (first args) {})
+        filenames (if options? (rest args) args)]
+    (validate-files filenames)
+    (reduce
+      (fn [queries file]
+        (let [{snips true
+               fns   false}
+              (group-by
+                #(-> % second :meta :snip? boolean)
+                (hugsql/map-of-db-fns file options))]
+          (-> queries
+              (update :snips (fnil into {}) (mapv try-snip snips))
+              (update :fns (fnil into {}) (mapv try-query fns)))))
+      {}
+      filenames)))
+
+(defn intern-fn [ns id meta f]
+  (intern ns (with-meta (symbol (name id)) meta) f))
+
+(defmacro bind-connection [conn & filenames]
+  `(let [{snips# :snips fns# :fns :as queries#} (conman.core/load-queries '~filenames)]
+     (doseq [[id# {fn# :fn meta# :meta}] snips#]
+       (conman.core/intern-fn *ns* id# meta# fn#))
+     (doseq [[id# {query# :fn meta# :meta}] fns#]
+       (conman.core/intern-fn *ns* id# meta#
+                              (fn fn#
+                                ([] (query# ~conn {}))
+                                ([params#] (query# ~conn params#))
+                                ([conn# params# & args#] (apply query# conn# params# args#)))))
+     queries#))
+
+(defmacro bind-connection-deref [conn & filenames]
+  `(let [{snips# :snips fns# :fns :as queries#} (conman.core/load-queries '~filenames)]
+     (doseq [[id# {fn# :fn meta# :meta}] snips#]
+       (conman.core/intern-fn *ns* id# meta# fn#))
+     (doseq [[id# {query# :fn meta# :meta}] fns#]
+       (conman.core/intern-fn *ns* id# meta#
+                              (fn fn#
+                                ([] (query# (deref ~conn) {}))
+                                ([params#] (query# (deref ~conn) params#))
+                                ([conn# params# & args#] (apply query# conn# params# args#)))))
+     queries#))
+
+(defn bind-connection-map [conn & args]
+  (-> (load-queries args)
+      (update :snips
+              (fn [snips]
+                (reduce (fn [acc [id snip]] (assoc acc id snip)) {} snips)))
+      (update :fns
+              (fn [queries]
+                (reduce
+                  (fn [acc [id query]]
+                    (assoc acc id
+                               (update query
+                                       :fn
+                                       (fn [query]
+                                         (fn fn#
+                                           ([] (query conn {}))
+                                           ([params]
+                                            (query conn params))
+                                           ([conn params & args] (apply query conn params args)))))))
+                  {}
+                  queries)))))
+
+(defn find-fn [connection-map query-type k]
+  (or (get-in connection-map [query-type k :fn])
+      (throw (IllegalArgumentException.
+               (str (if (= query-type :snips) "no snippet" "no query")
+                    " found for the key: " k
+                    "', available queries: " (keys (get connection-map query-type)))))))
+
+(defn snip [connection-map snip-key & args]
+  "runs a SQL query snippet
+  queries - a map of queries
+  id      - keyword indicating the name of the query
+  args    - arguments that will be passed to the query"
+  (apply (find-fn connection-map :snips snip-key) args))
 
 (defn query
   "runs a database query and returns the result
@@ -35,73 +121,12 @@
   queries - a map of queries
   id      - keyword indicating the name of the query
   args    - arguments that will be passed to the query"
-  [conn queries id & args]
-  (if-let [query (-> queries :fns id :fn)]
-    (apply query conn args)
-    (throw (Exception. (str "no query found for the key '" id
-                            "', available queries: " (keys (:fns queries)))))))
-(defn snip
-  "runs a SQL query snippet
-  queries - a map of queries
-  id      - keyword indicating the name of the query
-  args    - arguments that will be passed to the query"
-  [queries id & args]
-  (if-let [snip (-> queries :snips id :fn)]
-    (apply snip args)
-    (throw (Exception. (str "no snippet found for the key '" id
-                            "', available queries: " (keys (:snips queries)))))))
-
-(defmacro bind-connection [conn & filenames]
-  (let [options?  (map? (first filenames))
-        options   (if options? (first filenames) {})
-        filenames (if options? (rest filenames) filenames)]
-    `(let [{snips# :snips fns# :fns :as queries#} (conman.core/load-queries '~filenames ~options)]
-       (doseq [[id# {fn# :fn meta# :meta}] snips#]
-         (intern *ns* (with-meta (symbol (name id#)) meta#)
-                 (fn [& args#]
-                   (try (apply fn# args#)
-                        (catch Exception e#
-                          (throw (Exception. (format "Exception in %s" id#) e#)))))))
-       (doseq [[id# {fn# :fn meta# :meta}] fns#]
-         (intern *ns* (with-meta (symbol (name id#)) meta#)
-                 (fn f#
-                   ([] (f# ~conn {}))
-                   ([params#] (f# ~conn params#))
-                   ([conn# params#]
-                    (try (fn# conn# params#)
-                         (catch Exception e#
-                           (throw (Exception. (format "Exception in %s" id#) e#)))))
-                   ([conn# params# opts# & command-opts#]
-                    (try (apply fn# conn# params# opts# command-opts#)
-                         (catch Exception e#
-                           (throw (Exception. (format "Exception in %s" id#) e#))))))))
-       queries#)))
-
-(defmacro bind-connection-deref [conn & filenames]
-  (let [options?  (map? (first filenames))
-        options   (if options? (first filenames) {})
-        filenames (if options? (rest filenames) filenames)]
-    `(let [{snips# :snips fns# :fns :as queries#} (conman.core/load-queries '~filenames ~options)]
-       (doseq [[id# {fn# :fn meta# :meta}] snips#]
-         (intern *ns* (with-meta (symbol (name id#)) meta#)
-                 (fn [& args#]
-                   (try (apply fn# args#)
-                        (catch Exception e#
-                          (throw (Exception. (format "Exception in %s" id#) e#)))))))
-       (doseq [[id# {fn# :fn meta# :meta}] fns#]
-         (intern *ns* (with-meta (symbol (name id#)) meta#)
-                 (fn f#
-                   ([] (f# (deref ~conn) {}))
-                   ([params#] (f# (deref ~conn) params#))
-                   ([conn# params#]
-                    (try (fn# conn# params#)
-                         (catch Exception e#
-                           (throw (Exception. (format "Exception in %s" id#) e#)))))
-                   ([conn# params# opts# & command-opts#]
-                    (try (apply fn# conn# params# opts# command-opts#)
-                         (catch Exception e#
-                           (throw (Exception. (format "Exception in %s" id#) e#))))))))
-       queries#)))
+  ([connection-map query-key]
+   ((find-fn connection-map :fns query-key)))
+  ([connection-map query-key params]
+   ((find-fn connection-map :fns query-key) params))
+  ([conn connection-map query-key params & opts]
+   (apply (find-fn connection-map :fns query-key) conn params opts)))
 
 (defn- format-url [pool-spec]
   (if (:jdbc-url pool-spec)
