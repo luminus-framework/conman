@@ -16,28 +16,28 @@
   [id
    (update snip :fn
            (fn [snip]
-             (fn f# [& args]
+             (fn [& args]
                (try (apply snip args)
                     (catch Exception e
-                      (throw (Exception. (format "Exception in %s" id) e)))))))])
+                      (throw (Exception. (str "Exception in " id) e)))))))])
 
 (defn try-query [[id query]]
   [id
    (update query :fn
            (fn [query]
-             (fn f#
+             (fn
                ([conn params]
                 (try (query conn params)
                      (catch Exception e
-                       (throw (Exception. (format "Exception in %s" id) e)))))
+                       (throw (Exception. (str "Exception in " id) e)))))
                ([conn params opts & command-opts]
                 (try (apply query conn params opts command-opts)
                      (catch Exception e
-                       (throw (Exception. (format "Exception in %s" id) e))))))))])
+                       (throw (Exception. (str "Exception in " id) e))))))))])
 
 (defn load-queries [args]
-  (let [options?  (map? (first args))
-        options   (if options? (first args) {})
+  (let [options? (map? (first args))
+        options (if options? (first args) {})
         filenames (if options? (rest args) args)]
     (validate-files filenames)
     (reduce
@@ -62,7 +62,7 @@
        (conman.core/intern-fn *ns* id# meta# fn#))
      (doseq [[id# {query# :fn meta# :meta}] fns#]
        (conman.core/intern-fn *ns* id# meta#
-                              (fn fn#
+                              (fn f#
                                 ([] (query# ~conn {}))
                                 ([params#] (query# ~conn params#))
                                 ([conn# params# & args#] (apply query# conn# params# args#)))))
@@ -74,7 +74,7 @@
        (conman.core/intern-fn *ns* id# meta# fn#))
      (doseq [[id# {query# :fn meta# :meta}] fns#]
        (conman.core/intern-fn *ns* id# meta#
-                              (fn fn#
+                              (fn f#
                                 ([] (query# (deref ~conn) {}))
                                 ([params#] (query# (deref ~conn) params#))
                                 ([conn# params# & args#] (apply query# conn# params# args#)))))
@@ -176,8 +176,8 @@
   [[dbsym & opts] & body]
   `(if (instance? IDeref ~dbsym)
      (clojure.java.jdbc/with-db-transaction [t-conn# (deref ~dbsym) ~@opts]
-       (binding [~dbsym (delay t-conn#)]
-         ~@body))
+                                            (binding [~dbsym (delay t-conn#)]
+                                              ~@body))
      (clojure.java.jdbc/with-db-transaction [t-conn# ~dbsym ~@opts]
-       (binding [~dbsym t-conn#]
-         ~@body))))
+                                            (binding [~dbsym t-conn#]
+                                              ~@body))))
