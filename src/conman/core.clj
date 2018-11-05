@@ -35,7 +35,7 @@
                      (catch Exception e
                        (throw (Exception. (str "Exception in " id) e))))))))])
 
-(defn load-queries [args]
+(defn load-queries [& args]
   (let [options? (map? (first args))
         options (if options? (first args) {})
         filenames (if options? (rest args) args)]
@@ -57,7 +57,7 @@
   (intern ns (with-meta (symbol (name id)) meta) f))
 
 (defmacro bind-connection [conn & filenames]
-  `(let [{snips# :snips fns# :fns :as queries#} (conman.core/load-queries '~filenames)]
+  `(let [{snips# :snips fns# :fns :as queries#} (conman.core/load-queries ~@filenames)]
      (doseq [[id# {fn# :fn meta# :meta}] snips#]
        (conman.core/intern-fn *ns* id# meta# fn#))
      (doseq [[id# {query# :fn meta# :meta}] fns#]
@@ -69,7 +69,7 @@
      queries#))
 
 (defmacro bind-connection-deref [conn & filenames]
-  `(let [{snips# :snips fns# :fns :as queries#} (conman.core/load-queries '~filenames)]
+  `(let [{snips# :snips fns# :fns :as queries#} (conman.core/load-queries ~@filenames)]
      (doseq [[id# {fn# :fn meta# :meta}] snips#]
        (conman.core/intern-fn *ns* id# meta# fn#))
      (doseq [[id# {query# :fn meta# :meta}] fns#]
@@ -81,7 +81,7 @@
      queries#))
 
 (defn bind-connection-map [conn & args]
-  (-> (load-queries args)
+  (-> (apply load-queries args)
       (update :snips
               (fn [snips]
                 (reduce (fn [acc [id snip]] (assoc acc id snip)) {} snips)))

@@ -110,7 +110,7 @@
                           (by-appearance {:appearance "orange"})})))))
 
 (deftest explicit-queries
-  (let [queries (load-queries ["queries.sql"])]
+  (let [queries (load-queries "queries.sql")]
     (is (= 1
            (query conn
                   queries
