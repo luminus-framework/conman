@@ -1,3 +1,7 @@
+## 0.8.4
+
+* updated dependency versions, switched to use next.jdbc
+
 ## 0.8.1
 
 * added `bind-connection-map` that returns a map of functions without interning them.
