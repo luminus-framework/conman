@@ -1,14 +1,14 @@
 (ns conman.core-test
   (:require [clojure.test :refer :all]
             [conman.core :refer :all]
-            [clojure.java.jdbc :as sql]
+            [next.jdbc :as jdbc]
             [clojure.repl :refer [doc]]
             [clojure.java.io :as io]
             [mount.core :as m])
   (:import (clojure.lang IDeref)))
 
 (m/defstate ^:dynamic conn
-  :start {:connection-uri "jdbc:h2:./test.db"
+  :start {:jdbcUrl        "jdbc:h2:./test.db"
           :make-pool?     true
           :naming         {:keys   clojure.string/lower-case
                            :fields clojure.string/upper-case}})
@@ -20,17 +20,16 @@
   (io/delete-file "test.db.trace.db" true))
 
 (defn create-test-table []
-  (sql/db-do-commands
+  (jdbc/execute!
     conn
-    ["DROP TABLE fruits IF EXISTS;"
-     (sql/create-table-ddl
-       :fruits
-       [[:id :int "DEFAULT 0"]
-        [:name "VARCHAR(32)" "PRIMARY KEY"]
-        [:appearance "VARCHAR(32)"]
-        [:cost :int]
-        [:grade :int]]
-       {:table-spec ""})]))
+    ["DROP TABLE fruits IF EXISTS;
+    CREATE TABLE fruits (
+     id int default 0,
+     name varchar(32) primary key,
+     appearance varchar(32),
+     cost int,
+     grade int
+     );"]))
 
 (use-fixtures
   :once
@@ -71,8 +70,7 @@
 
 (deftest transaction
   (with-transaction
-    [conn]
-    (sql/db-set-rollback-only! conn)
+    [conn {:rollback-only true}]
     (is
       (= 1
          (add-fruit!
@@ -88,14 +86,15 @@
        (get-fruit {:name "apple"}))))
 
 (deftest transaction-options
+  (prn conn)
   (with-transaction
     [conn {:isolation :serializable}]
     (is (= java.sql.Connection/TRANSACTION_SERIALIZABLE
-           (.getTransactionIsolation (sql/db-connection conn)))))
+           (.getTransactionIsolation (jdbc/get-connection conn)))))
   (with-transaction
     [conn {:isolation :read-uncommitted}]
     (is (= java.sql.Connection/TRANSACTION_READ_UNCOMMITTED
-           (.getTransactionIsolation (sql/db-connection conn))))))
+           (.getTransactionIsolation (jdbc/get-connection conn))))))
 
 (deftest hugsql-snippets
   (is (= 1

@@ -2,12 +2,12 @@
 (ns conman.core2-test
   (:require [clojure.test :refer :all]
             [conman.core :refer :all]
-            [clojure.java.jdbc :as sql]
+            [next.jdbc :as jdbc]
             [clojure.java.io :as io]
             [mount.core :as m]))
 
 (m/defstate ^:dynamic conn2
-  :start {:connection-uri "jdbc:h2:./test.db"
+  :start {:jdbcUrl       "jdbc:h2:./test.db"
           :make-pool?     true
           :naming         {:keys   clojure.string/lower-case
                            :fields clojure.string/upper-case}})
@@ -19,17 +19,16 @@
   (io/delete-file "test.db.trace.db" true))
 
 (defn create-test-table []
-  (sql/db-do-commands
-    @conn2
-    ["DROP TABLE fruits IF EXISTS;"
-     (sql/create-table-ddl
-       :fruits
-       [[:id :int "DEFAULT 0"]
-        [:name "VARCHAR(32)" "PRIMARY KEY"]
-        [:appearance "VARCHAR(32)"]
-        [:cost :int]
-        [:grade :int]]
-       {:table-spec ""})]))
+  (jdbc/execute!
+    conn2
+    ["DROP TABLE fruits IF EXISTS;
+    CREATE TABLE fruits (
+     id int default 0,
+     name varchar(32) primary key,
+     appearance varchar(32),
+     cost int,
+     grade int
+     );"]))
 
 (use-fixtures
   :once
@@ -43,8 +42,7 @@
 
 (deftest transaction
   (with-transaction
-    [conn2]
-    (sql/db-set-rollback-only! @conn2)
+    [conn2 {:rollback-only true}]
     (is
       (= 1
          (add-fruit!

@@ -1,11 +1,13 @@
 (ns conman.core
   (:require [clojure.java.io :as io]
-            clojure.java.jdbc
             [clojure.set :refer [rename-keys]]
             [hikari-cp.core :refer [make-datasource]]
             [hugsql.core :as hugsql]
+            [hugsql.adapter.next-jdbc :as next-adapter]
             [to-jdbc-uri.core :refer [to-jdbc-uri]])
   (:import (clojure.lang IDeref)))
+
+(hugsql/set-adapter! (next-adapter/hugsql-adapter-next-jdbc))
 
 (defn validate-files [filenames]
   (doseq [file filenames]
@@ -171,13 +173,13 @@
    connection. The isolation level and readonly status of the transaction may also be specified.
    (with-transaction [conn {:isolation level :read-only? true}]
      ... t-conn ...)
-   See clojure.java.jdbc/db-transaction* for more details on the semantics of the :isolation and
-   :read-only? options."
+   See next.jdbc/transact for more details on the semantics of the :isolation and
+   :read-only options."
   [[dbsym & opts] & body]
   `(if (instance? IDeref ~dbsym)
-     (clojure.java.jdbc/with-db-transaction [t-conn# (deref ~dbsym) ~@opts]
-                                            (binding [~dbsym (delay t-conn#)]
-                                              ~@body))
-     (clojure.java.jdbc/with-db-transaction [t-conn# ~dbsym ~@opts]
-                                            (binding [~dbsym t-conn#]
-                                              ~@body))))
+     (next.jdbc/with-transaction [t-conn# (deref ~dbsym) ~@opts]
+                                 (binding [~dbsym (delay t-conn#)]
+                                   ~@body))
+     (next.jdbc/with-transaction [t-conn# ~dbsym ~@opts]
+                                 (binding [~dbsym t-conn#]
+                                   ~@body))))

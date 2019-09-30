@@ -5,6 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [com.layerware/hugsql "0.5.1"]
+                 [com.layerware/hugsql-adapter-next-jdbc "0.5.1"]
                  [com.carouselapps/to-jdbc-uri "0.5.0"]                 
                  [seancorfield/next.jdbc "1.0.8"]
                  [hikari-cp "2.9.0"]]
