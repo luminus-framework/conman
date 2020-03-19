@@ -8,10 +8,13 @@
   (:import (clojure.lang IDeref)))
 
 (m/defstate ^:dynamic conn
-  :start {:jdbcUrl        "jdbc:h2:./test.db"
-          :make-pool?     true
-          :naming         {:keys   clojure.string/lower-case
-                           :fields clojure.string/upper-case}})
+  :start (:datasource
+           (connect!
+             {:jdbc-url   "jdbc:h2:./test.db"
+              :make-pool? true
+              :naming     {:keys   clojure.string/lower-case
+                           :fields clojure.string/upper-case}}))
+  :stop (disconnect! conn))
 
 (bind-connection conn "queries.sql")
 
