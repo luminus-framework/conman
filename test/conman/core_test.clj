@@ -4,8 +4,7 @@
             [next.jdbc :as jdbc]
             [clojure.repl :refer [doc]]
             [clojure.java.io :as io]
-            [mount.core :as m])
-  (:import (clojure.lang IDeref)))
+            [mount.core :as m]))
 
 (m/defstate ^:dynamic conn
   :start (:datasource
@@ -89,15 +88,14 @@
        (get-fruit {:name "apple"}))))
 
 (deftest transaction-options
-  (prn conn)
   (with-transaction
     [conn {:isolation :serializable}]
     (is (= java.sql.Connection/TRANSACTION_SERIALIZABLE
-           (.getTransactionIsolation (jdbc/get-connection conn)))))
+           (.getTransactionIsolation conn))))
   (with-transaction
     [conn {:isolation :read-uncommitted}]
     (is (= java.sql.Connection/TRANSACTION_READ_UNCOMMITTED
-           (.getTransactionIsolation (jdbc/get-connection conn))))))
+           (.getTransactionIsolation conn)))))
 
 (deftest hugsql-snippets
   (is (= 1

@@ -5,7 +5,7 @@
             [hugsql.core :as hugsql]
             [hugsql.adapter.next-jdbc :as next-adapter]
             [to-jdbc-uri.core :refer [to-jdbc-uri]])
-  (:import (clojure.lang IDeref)))
+  (:import [clojure.lang IDeref]))
 
 (hugsql/set-adapter! (next-adapter/hugsql-adapter-next-jdbc))
 
@@ -38,8 +38,8 @@
                        (throw (Exception. (str "Exception in " id) e))))))))])
 
 (defn load-queries [& args]
-  (let [options? (map? (first args))
-        options (if options? (first args) {})
+  (let [options?  (map? (first args))
+        options   (if options? (first args) {})
         filenames (if options? (rest args) args)]
     (validate-files filenames)
     (reduce
@@ -166,6 +166,11 @@
   [conn pool-spec]
   (disconnect! conn)
   (connect! pool-spec))
+
+(extend-protocol next.jdbc.protocols/Sourceable
+  IDeref
+  (get-datasource [this]
+    (next.jdbc.protocols/get-datasource (deref this))))
 
 (defmacro with-transaction
   "Runs the body in a transaction where t-conn is the name of the transaction connection.
