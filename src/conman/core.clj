@@ -150,7 +150,7 @@
   "attempts to create a new connection and set it as the value of the conn atom,
    does nothing if conn atom is already populated"
   [pool-spec]
-  {:datasource (make-datasource (make-config pool-spec))})
+  (make-datasource (make-config pool-spec)))
 
 (defn disconnect!
   "checks if there's a connection and closes it
