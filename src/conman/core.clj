@@ -110,11 +110,12 @@
                     " found for the key: " k
                     "', available queries: " (keys (get connection-map query-type)))))))
 
-(defn snip [connection-map snip-key & args]
+(defn snip 
   "runs a SQL query snippet
   queries - a map of queries
   id      - keyword indicating the name of the query
   args    - arguments that will be passed to the query"
+  [connection-map snip-key & args]
   (apply (find-fn connection-map :snips snip-key) args))
 
 (defn query
