@@ -1,11 +1,13 @@
 (ns conman.core
   (:require [clojure.java.io :as io]
-            clojure.java.jdbc
             [clojure.set :refer [rename-keys]]
             [hikari-cp.core :refer [make-datasource]]
             [hugsql.core :as hugsql]
+            [hugsql.adapter.next-jdbc :as next-adapter]
             [to-jdbc-uri.core :refer [to-jdbc-uri]])
-  (:import (clojure.lang IDeref)))
+  (:import [clojure.lang IDeref]))
+
+(hugsql/set-adapter! (next-adapter/hugsql-adapter-next-jdbc))
 
 (defn validate-files [filenames]
   (doseq [file filenames]
@@ -36,8 +38,8 @@
                        (throw (Exception. (str "Exception in " id) e))))))))])
 
 (defn load-queries [& args]
-  (let [options? (map? (first args))
-        options (if options? (first args) {})
+  (let [options?  (map? (first args))
+        options   (if options? (first args) {})
         filenames (if options? (rest args) args)]
     (validate-files filenames)
     (reduce
@@ -148,7 +150,7 @@
   "attempts to create a new connection and set it as the value of the conn atom,
    does nothing if conn atom is already populated"
   [pool-spec]
-  {:datasource (make-datasource (make-config pool-spec))})
+  (make-datasource (make-config pool-spec)))
 
 (defn disconnect!
   "checks if there's a connection and closes it
@@ -165,19 +167,24 @@
   (disconnect! conn)
   (connect! pool-spec))
 
+(extend-protocol next.jdbc.protocols/Sourceable
+  IDeref
+  (get-datasource [this]
+    (next.jdbc.protocols/get-datasource (deref this))))
+
 (defmacro with-transaction
   "Runs the body in a transaction where t-conn is the name of the transaction connection.
    The body will be evaluated within a binding where conn is set to the transactional
    connection. The isolation level and readonly status of the transaction may also be specified.
    (with-transaction [conn {:isolation level :read-only? true}]
      ... t-conn ...)
-   See clojure.java.jdbc/db-transaction* for more details on the semantics of the :isolation and
-   :read-only? options."
+   See next.jdbc/transact for more details on the semantics of the :isolation and
+   :read-only options."
   [[dbsym & opts] & body]
   `(if (instance? IDeref ~dbsym)
-     (clojure.java.jdbc/with-db-transaction [t-conn# (deref ~dbsym) ~@opts]
-                                            (binding [~dbsym (delay t-conn#)]
-                                              ~@body))
-     (clojure.java.jdbc/with-db-transaction [t-conn# ~dbsym ~@opts]
-                                            (binding [~dbsym t-conn#]
-                                              ~@body))))
+     (next.jdbc/with-transaction [t-conn# (deref ~dbsym) ~@opts]
+                                 (binding [~dbsym (delay t-conn#)]
+                                   ~@body))
+     (next.jdbc/with-transaction [t-conn# ~dbsym ~@opts]
+                                 (binding [~dbsym t-conn#]
+                                   ~@body))))
