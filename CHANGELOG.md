@@ -1,6 +1,14 @@
-## 0.8.4
+## 0.8.6
+
+* improved exception messages
+
+## 0.8.5
 
 * updated dependency versions, switched to use next.jdbc
+
+## 0.8.4
+
+* updated dependency versions
 
 ## 0.8.1
 
