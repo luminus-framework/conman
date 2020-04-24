@@ -159,9 +159,9 @@
   "checks if there's a connection and closes it
    resets the conn to nil"
   [conn]
-  (when-let [ds (:datasource conn)]
-    (when-not (.isClosed ds)
-      (.close ds))))
+  (when (and (instance? com.zaxxer.hikari.HikariDataSource conn)
+             (not (.isClosed conn)))
+    (.close conn)))
 
 (defn reconnect!
   "calls disconnect! to ensure the connection is closed

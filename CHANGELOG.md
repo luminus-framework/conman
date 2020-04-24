@@ -1,3 +1,7 @@
+## 0.8.7
+
+- fix for disconnect!
+
 ## 0.8.6
 
 * improved exception messages
