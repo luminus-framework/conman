@@ -1,3 +1,7 @@
+## 0.8.8
+
+- hikari-cp 2.12.0
+
 ## 0.8.7
 
 - fix for disconnect!
