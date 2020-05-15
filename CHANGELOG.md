@@ -1,3 +1,7 @@
+## 8.8.9
+
+- [fix for arglists metadata for generated functions](https://github.com/luminus-framework/conman/pull/71)
+
 ## 0.8.8
 
 - hikari-cp 2.12.0
