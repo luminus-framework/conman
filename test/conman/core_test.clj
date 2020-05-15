@@ -43,7 +43,7 @@
     (m/stop)))
 
 (deftest doc-test
-  (is (= "-------------------------\nconman.core-test/get-fruit\n([db] [db params] [db params options & command-options])\n  gets fruit by name\n"
+  (is (= "-------------------------\nconman.core-test/get-fruit\n([] [params] [db params options & command-options])\n  gets fruit by name\n"
          (with-out-str (doc get-fruit)))))
 
 (deftest datasource
