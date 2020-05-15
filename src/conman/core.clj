@@ -66,7 +66,11 @@
      (doseq [[id# {fn# :fn meta# :meta}] snips#]
        (conman.core/intern-fn *ns* id# meta# fn#))
      (doseq [[id# {query# :fn meta# :meta}] fns#]
-       (conman.core/intern-fn *ns* id# meta#
+       (conman.core/intern-fn *ns* id#
+                              ;; Need to explicitly set :arglists since we don't use defn.
+                              ;; Another option would be to generate defns.
+                              (assoc meta#
+                                     :arglists (quote ~'([] [params] [db params options & command-options])))
                               (fn f#
                                 ([] (query# ~conn {}))
                                 ([params#] (query# ~conn params#))
@@ -78,7 +82,9 @@
      (doseq [[id# {fn# :fn meta# :meta}] snips#]
        (conman.core/intern-fn *ns* id# meta# fn#))
      (doseq [[id# {query# :fn meta# :meta}] fns#]
-       (conman.core/intern-fn *ns* id# meta#
+       (conman.core/intern-fn *ns* id#
+                              (assoc meta#
+                                     :arglists (quote ~'([] [params] [db params options & command-options])))
                               (fn f#
                                 ([] (query# (deref ~conn) {}))
                                 ([params#] (query# (deref ~conn) params#))
