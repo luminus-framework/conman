@@ -1,3 +1,6 @@
+## 0.9.0
+- bumped up next.jdbc to 1.1.547
+
 ## 0.8.9
 
 - [fix for arglists metadata for generated functions](https://github.com/luminus-framework/conman/pull/71)

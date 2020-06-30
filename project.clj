@@ -1,4 +1,4 @@
-(defproject conman "0.8.9"
+(defproject conman "0.9.0"
   :description "a database connection management library"
   :url "https://github.com/luminus-framework/conman"
   :license {:name "Eclipse Public License"
@@ -7,9 +7,9 @@
                  [com.layerware/hugsql "0.5.1"]
                  [com.layerware/hugsql-adapter-next-jdbc "0.5.1"]
                  [com.carouselapps/to-jdbc-uri "0.5.0"]
-                 [seancorfield/next.jdbc "1.0.409"]
+                 [seancorfield/next.jdbc "1.1.547"]
                  [hikari-cp "2.12.0"]]
   :profiles
   {:dev
-   {:dependencies [[com.h2database/h2 "1.4.199"]
+   {:dependencies [[com.h2database/h2 "1.4.200"]
                    [mount "0.1.16"]]}})
