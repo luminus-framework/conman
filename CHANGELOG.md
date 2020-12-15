@@ -1,3 +1,9 @@
+## 0.9.1
+
+- bumped up dependencies
+  - next.jdbc 1.1.613
+  - hikari-cp 2.13.0
+
 ## 0.9.0
 - bumped up next.jdbc to 1.1.547
 
