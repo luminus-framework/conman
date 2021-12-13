@@ -21,8 +21,7 @@
              (fn [& args]
                (try (apply snip args)
                     (catch Exception e
-                      (throw (Exception. (str "Exception  in " id  " caused by: " (.getMessage e)
-                                              ". Call .getCause to see parent exception") e)))))))])
+                      (throw (ex-info (ex-message e) {:snip-id id} e)))))))])
 
 (defn try-query [[id query]]
   [id
@@ -32,13 +31,11 @@
                ([conn params]
                 (try (query conn params)
                      (catch Exception e
-                       (throw (Exception. (str "Exception  in " id  " caused by: " (.getMessage e)
-                                               ". Call .getCause to see parent exception") e)))))
+                       (throw (ex-info (ex-message e) {:query-id id} e)))))
                ([conn params opts & command-opts]
                 (try (apply query conn params opts command-opts)
                      (catch Exception e
-                       (throw (Exception. (str "Exception  in " id  " caused by: " (.getMessage e)
-                                               ". Call .getCause to see parent exception") e))))))))])
+                       (throw (ex-info (ex-message e) {:query-id id} e))))))))])
 
 (defn load-queries [& args]
   (let [options?  (map? (first args))
