@@ -4,8 +4,8 @@
   :license {:name "Eclipse Public License"
             :url  "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.10.1"]
-                 [com.layerware/hugsql-core "0.5.1"]
-                 [com.layerware/hugsql-adapter-next-jdbc "0.5.1"]
+                 [com.layerware/hugsql-core "0.5.3"]
+                 [com.layerware/hugsql-adapter-next-jdbc "0.5.3"]
                  [com.carouselapps/to-jdbc-uri "0.5.0"]
                  [seancorfield/next.jdbc "1.1.613"]
                  [hikari-cp "2.13.0"]]
