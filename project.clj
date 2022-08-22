@@ -7,9 +7,9 @@
                  [com.layerware/hugsql-core "0.5.3"]
                  [com.layerware/hugsql-adapter-next-jdbc "0.5.3"]
                  [com.carouselapps/to-jdbc-uri "0.5.0"]
-                 [seancorfield/next.jdbc "1.1.613"]
-                 [hikari-cp "2.13.0"]]
+                 [com.github.seancorfield/next.jdbc "1.2.796"]
+                 [hikari-cp "2.14.0"]]
   :profiles
   {:dev
-   {:dependencies [[com.h2database/h2 "1.4.200"]
+   {:dependencies [[com.h2database/h2 "2.1.214"]
                    [mount "0.1.16"]]}})
