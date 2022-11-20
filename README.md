@@ -193,11 +193,11 @@ and `:read-only?` keys respectively:
 
 ```clojure
 (with-transaction
-    [conn :isolation :serializable]
+    [conn {:isolation :serializable}]
     (= java.sql.Connection/TRANSACTION_SERIALIZABLE
        (.getTransactionIsolation (sql/db-connection conn))))
 (with-transaction
-  [conn :isolation :read-uncommitted]
+  [conn {:isolation :read-uncommitted}]
   (= java.sql.Connection/TRANSACTION_READ_UNCOMMITTED
      (.getTransactionIsolation (sql/db-connection conn))))
 ```
