@@ -1,3 +1,6 @@
+## 0.9.6
+- breaking change, Java 8 is no longer supported
+
 ## 0.9.1
 
 - bumped up dependencies
